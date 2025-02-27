@@ -1,10 +1,18 @@
-import Image from "next/image";
+
+import HeroCarousel from "@/components/hero-carousel"
+import DescriptionSection from "@/components/description-section"
+import ContactSection from "@/components/contact-section"
+
 
 export default function Home() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Hello, World!</h1>
-      <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-    </div>  
-  );
+    <main className="min-h-screen">
+      
+      <HeroCarousel />
+      <DescriptionSection />
+      <ContactSection />
+     
+    </main>
+  )
 }
+
