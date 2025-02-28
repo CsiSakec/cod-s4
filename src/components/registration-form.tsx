@@ -954,33 +954,22 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                       Bank Transfer Details
                     </h4>
                     <p className="text-blue-700 mb-1">
-                      <span className="font-medium">Account Name:</span> CSI
-                      SAKEC Account
+                      <span className="font-medium">Account Name:</span> CSI SAKE
                     </p>
                     <p className="text-blue-700 mb-1">
                       <span className="font-medium">Account Number:</span>{" "}
-                      1234567890
+                      8678101300391
                     </p>
                     <p className="text-blue-700 mb-1">
                       <span className="font-medium">IFSC Code:</span>{" "}
-                      BANK0123456
+                      CNRB0000105
+                    </p>
+                    <p className="text-blue-700 mb-1">
+                      <span className="font-medium">Bank:</span> Canara Bank
                     </p>
                     <p className="text-blue-700">
-                      <span className="font-medium">Bank:</span> State Bank of
-                      India
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-blue-800 mb-2">
-                      UPI Details
-                    </h4>
-                    <p className="text-blue-700 mb-1">
-                      <span className="font-medium">UPI ID:</span>{" "}
-                      csisakec@okhdfcbank
-                    </p>
-                    <p className="text-blue-700 mb-1">
-                      <span className="font-medium">Name:</span> CSI SAKEC
+                      <span className="font-medium">Branch:</span>{" "}
+                      MUMBAI CHEMBUR MAIN
                     </p>
                   </div>
                 </div>

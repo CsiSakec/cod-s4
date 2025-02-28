@@ -24,18 +24,18 @@ export default function AboutPage() {
             </div>
             <div className="flex justify-center">
               <Image
-                src="/placeholder.svg?height=400&width=600"
+                src="/CSI-LOGO.png"
                 alt="CSI Logo and Activities"
-                width={600}
-                height={400}
-                className="rounded-lg shadow-lg"
+                width={400}
+                height={200}
+                className="rounded-lg"
               />
             </div>
           </div>
         </section>
 
         {/* COD Section */}
-        <section>
+        {/* <section>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1 flex justify-center">
               <Image
@@ -60,7 +60,7 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-        </section>
+        </section> */}
       </div>
     </main>
   )

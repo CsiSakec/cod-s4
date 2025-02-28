@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react"
+import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, Linkedin } from "lucide-react"
 
 export default function Footer() {
   return (
@@ -11,33 +11,24 @@ export default function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center">
               <Image
-                src="/placeholder.svg?height=40&width=120"
-                alt="Logo"
+                src="/CSI-SAKEC-logo.png"
+                alt="CSI-SAKEC"
                 width={120}
                 height={40}
-                className="h-10 w-auto"
+                className="h-15 w-auto"
               />
             </Link>
             <p className="text-gray-400 text-sm">
-              Join the biggest Call of Duty tournament and showcase your gaming skills. Compete with players from around
-              the world for amazing prizes.
+            Code off Duty: Season 4 – The ultimate coding showdown where logic, speed, and strategy reign supreme. Compete, conquer, and claim your victory!
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook size={20} />
-                <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter size={20} />
-                <span className="sr-only">Twitter</span>
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="https://www.instagram.com/csi.sakec" target='_blank' className="text-gray-400 hover:text-white transition-colors">
                 <Instagram size={20} />
                 <span className="sr-only">Instagram</span>
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Youtube size={20} />
-                <span className="sr-only">YouTube</span>
+              <Link href="https://www.linkedin.com/showcase/csi-sakec" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+                <Linkedin size={20} />
+                <span className="sr-only">LinkedIn</span>
               </Link>
             </div>
           </div>
@@ -112,15 +103,16 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <MapPin className="mr-2 h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">123 Gaming Street, E-Sports City, Tournament State, 12345</span>
+                <Link href="https://maps.app.goo.gl/i3YC7kxjui9WhYgS6" target="_blank" className="text-gray-400">
+                <span className="text-gray-400">Mahavir Education Trust Chowk, W.T Patil Marg, D P Rd, next to Duke's Company, Chembur, Mumbai, Maharashtra 400088</span>
+                </Link>
               </li>
-              <li className="flex items-center">
-                <Phone className="mr-2 h-5 w-5 text-gray-400" />
-                <span className="text-gray-400">+1 (123) 456-7890</span>
-              </li>
+              
               <li className="flex items-center">
                 <Mail className="mr-2 h-5 w-5 text-gray-400" />
-                <span className="text-gray-400">info@codtournament.com</span>
+                <Link href="mailto:csi@sakec.ac.in" target="_blank" className="text-gray-400">
+                <span className="text-gray-400">csi@sakec.ac.in</span>
+                </Link>
               </li>
             </ul>
           </div>
@@ -128,7 +120,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-10 pt-6">
           <p className="text-center text-gray-400 text-sm">
-            © {new Date().getFullYear()} COD Tournament. All rights reserved.
+            © {new Date().getFullYear()} COD-S4. All rights reserved.
           </p>
         </div>
       </div>

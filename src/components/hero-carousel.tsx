@@ -46,7 +46,7 @@ export default function HeroCarousel() {
   }, []) // Removed nextSlide from dependencies
 
   return (
-    <div className="relative w-full h-[920px] overflow-hidden">
+    <div className="relative w-full h-[30vh] overflow-hidden sm:h-[90vh]">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -59,7 +59,7 @@ export default function HeroCarousel() {
               src={slide.image || "/placeholder.svg"}
               alt={slide.title}
               fill
-              className="object-cover"
+              className="object-fill"
               priority={index === 0}
             />
           </div>
