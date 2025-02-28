@@ -40,6 +40,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { database } from '@/firebaseConfig';
+import { ref, set } from 'firebase/database';
 
 function SuccessModal({
   open,
@@ -126,31 +128,103 @@ export default function RegistrationForm() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  // Update imports
+
+// Update onSubmit function
+const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  try {
     setIsLoading(true);
-    try {
-      const response = await axios.post('/api/registration', {
-        ...values,
+
+    // Basic validation
+    if (!values.isFromSakec) {
+      throw new Error("Please select if you are from SAKEC College");
+    }
+
+    if (!values.name || !values.email || !values.phone) {
+      throw new Error("Personal details are required");
+    }
+
+    if (!values.paymentProof) {
+      throw new Error("Payment proof is required");
+    }
+
+    if (isCsiMember === "yes" && !values.csiProof) {
+      throw new Error("CSI membership proof is required");
+    }
+
+    // Handle payment proof file
+    const paymentFile = values.paymentProof;
+    const paymentReader = new FileReader();
+    
+    const paymentBase64 = await new Promise((resolve, reject) => {
+      paymentReader.onload = () => resolve(paymentReader.result);
+      paymentReader.onerror = reject;
+      paymentReader.readAsDataURL(paymentFile);
+    });
+
+    // Handle CSI proof file if exists
+    let csiBase64 = null;
+    if (values.csiProof) {
+      const csiReader = new FileReader();
+      csiBase64 = await new Promise((resolve, reject) => {
+        csiReader.onload = () => resolve(csiReader.result);
+        csiReader.onerror = reject;
+        csiReader.readAsDataURL(values.csiProof);
+      });
+    }
+
+    // Create registration data object
+    const registrationId = Date.now().toString();
+    const registrationData = {
+      id: registrationId,
+      personalInfo: {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        college: values.college,
+        year: values.year,
+        branch: values.branch,
+      },
+      participationDetails: {
+        isFromSakec: values.isFromSakec,
         participantTypes,
+        isCsiMember,
         selectedRounds,
         totalPrice,
-      });
-  
-      toast.success('Registration successful!');
-      setShowSuccessModal(true);
-      form.reset();
-      setStep(1);
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorMessage = (error.response.data as { error?: string })?.error || 'Registration failed';
-        toast.error(errorMessage);
-      } else {
-        toast.error('An unexpected error occurred');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      },
+      documents: {
+        paymentProof: paymentBase64,
+        csiProof: csiBase64,
+      },
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to Firebase Realtime Database
+    const registrationRef = ref(database, `registrations/${registrationId}`);
+    await set(registrationRef, registrationData);
+
+    // Show success message and reset form
+    toast.success('Registration successful!');
+    setShowSuccessModal(true);
+    form.reset();
+    setStep(1);
+
+    // Reset all state
+    setParticipantTypes([]);
+    setSelectedRounds([]);
+    setIsFromSakec(null);
+    setIsCsiMember(null);
+    setYear(null);
+    setTotalPrice(0);
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    toast.error(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const nextStep = async () => {
     // Handle form validation before proceeding to next step
