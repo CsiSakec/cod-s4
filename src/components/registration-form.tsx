@@ -1,54 +1,28 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import axios from "axios";
-import { Toaster, toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  CheckCircle2,
-  AlertCircle,
-  School,
-  User,
-  CreditCard,
-} from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { database } from '@/firebaseConfig';
-import { ref, set } from 'firebase/database';
+import { useState, useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { Toaster, toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CheckCircle2, AlertCircle, School, User, CreditCard } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { database } from "@/firebaseConfig"
+import { ref, set } from "firebase/database"
 
 function SuccessModal({
   open,
   onClose,
 }: {
-  open: boolean;
-  onClose: () => void;
+  open: boolean
+  onClose: () => void
 }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -60,20 +34,15 @@ function SuccessModal({
           </DialogTitle>
         </DialogHeader>
         <div className="text-center space-y-4">
-          <p className="text-gray-600">
-            Thank you for registering! Your registration has been submitted
-            successfully.
-          </p>
-          <p className="text-sm text-gray-500">
-            You will receive a confirmation email shortly.
-          </p>
+          <p className="text-gray-600">Thank you for registering! Your registration has been submitted successfully.</p>
+          <p className="text-sm text-gray-500">You will receive a confirmation email shortly.</p>
           <Button onClick={onClose} className="w-full">
             Close
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 // Modified schema to make participantType an array instead of a single value
@@ -90,14 +59,19 @@ const formSchema = z.object({
     .min(10, { message: "Phone number must be 10 digits" })
     .max(10, { message: "Phone number must be 10 digits" })
     .regex(/^[0-9]+$/, { message: "Please enter only numbers" }),
-  college: z
+  prn: z
     .string()
-    .min(2, { message: "College name must be at least 2 characters." }),
+    .optional()
+    .refine((val) => !val || val.length === 10, {
+      message: "PRN must be 10 digits if provided",
+    }),
+  college: z.string().min(2, { message: "College name must be at least 2 characters." }),
   isCsiMember: z.enum(["yes", "no"]),
   rounds: z.array(z.string()).optional(),
+  transactionID: z.string().min(2, { message: "Please enter it" }),
   paymentProof: z.any().optional(),
   csiProof: z.any().optional(),
-});
+})
 
 export default function RegistrationForm() {
   const [step, setStep] = useState(1);
@@ -122,8 +96,10 @@ export default function RegistrationForm() {
       branch: "",
       email: "",
       phone: "",
+      prn: "",
       college: "",
       isCsiMember: undefined,
+      transactionID:"",
       rounds: [],
     },
   });
@@ -184,6 +160,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
         college: values.college,
         year: values.year,
         branch: values.branch,
+        prn: isFromSakec === "yes" ? values.prn : null, // Add PRN field
       },
       participationDetails: {
         isFromSakec: values.isFromSakec,
@@ -191,6 +168,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
         isCsiMember,
         selectedRounds,
         totalPrice,
+        transactionID: values.transactionID,
       },
       documents: {
         paymentProof: paymentBase64,
@@ -618,6 +596,27 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                       </FormItem>
                     )}
                   />
+                  {isFromSakec === "yes" && (
+                    <FormField
+                      control={form.control}
+                      name="prn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>PRN Number 🔢</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter your PRN number"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Enter your 10-digit Permanent Registration Number
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <FormField
                     control={form.control}
@@ -987,6 +986,22 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                 </div>
 
                 <div className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="transactionID"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transaction ID 👤</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your Transaction ID"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="paymentProof"
@@ -1010,7 +1025,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                       </FormItem>
                     )}
                   />
-
+                  
                   {isCsiMember === "yes" && (
                     <FormField
                       control={form.control}
@@ -1068,3 +1083,4 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
     </Card>
   );
 }
+
