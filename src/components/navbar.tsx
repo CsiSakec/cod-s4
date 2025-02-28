@@ -16,11 +16,11 @@ export default function Navbar() {
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
               <Image
-                src="/placeholder.svg?height=40&width=120"
+                src="/logo.png"
                 alt="Logo"
-                width={120}
-                height={40}
-                className="h-10 w-auto"
+                width={150}
+                height={60}
+                className="h-8 w-44"
               />
             </Link>
           </div>

@@ -2,18 +2,29 @@ import Image from "next/image"
 
 interface TeamCardProps {
   name: string
-  role?: string
+  role: string
   imageSrc: string
 }
 
 export default function TeamCard({ name, role, imageSrc }: TeamCardProps) {
+  const isHead = role.includes("HEAD") && !role.includes("CO-HEAD")
+
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-48 h-48 mb-4 overflow-hidden rounded-full border-4 border-primary">
-        <Image src={imageSrc || "/placeholder.svg"} alt={name} fill className="object-cover" />
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden w-72 transition-all duration-300 hover:shadow-xl hover:scale-105 group">
+      <div className="relative h-72 w-full overflow-hidden">
+        <Image
+          src={imageSrc || "/placeholder.svg"}
+          alt={name}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div> */}
       </div>
-      <h3 className="text-xl font-bold text-center">{name}</h3>
-      {role && <p className="text-sm text-muted-foreground text-center">{role}</p>}
+      <div className="p-2 text-center relative bg-white">
+        <h3 className="font-bold text-xl mb-2">{name}</h3>
+        <p className={`text-sm font-medium text-primary`}>{role}</p>
+  
+      </div>
     </div>
   )
 }

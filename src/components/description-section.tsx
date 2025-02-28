@@ -28,7 +28,7 @@ export default function DescriptionSection() {
           {/* Image */}
           <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
             <Image
-              src="/placeholder.svg?height=800&width=600"
+              src="/banner1.png"
               alt="Call of Duty Tournament"
               fill
               className="object-cover"

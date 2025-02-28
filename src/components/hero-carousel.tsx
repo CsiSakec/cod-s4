@@ -8,19 +8,19 @@ import { Button } from "@/components/ui/button"
 const slides = [
   {
     id: 1,
-    image: "/placeholder.svg?height=600&width=1200",
+    image: "/banner1.png",
     title: "Welcome to COD Tournament",
     description: "Join the biggest gaming event of the year",
   },
   {
     id: 2,
-    image: "/placeholder.svg?height=600&width=1200",
+    image: "/banner1.png",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
   {
     id: 3,
-    image: "/placeholder.svg?height=600&width=1200",
+    image: "/banner1.png",
     title: "Register Now",
     description: "Limited spots available. Don't miss out!",
   },
@@ -46,7 +46,7 @@ export default function HeroCarousel() {
   }, []) // Removed nextSlide from dependencies
 
   return (
-    <div className="relative w-full h-[500px] overflow-hidden">
+    <div className="relative w-full h-[920px] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -54,7 +54,7 @@ export default function HeroCarousel() {
             index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full pb-[38%]">
             <Image
               src={slide.image || "/placeholder.svg"}
               alt={slide.title}
@@ -62,12 +62,6 @@ export default function HeroCarousel() {
               className="object-cover"
               priority={index === 0}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <div className="text-center text-white px-4">
-                <h2 className="text-4xl font-bold mb-4">{slide.title}</h2>
-                <p className="text-xl mb-6">{slide.description}</p>
-              </div>
-            </div>
           </div>
         </div>
       ))}
@@ -94,7 +88,7 @@ export default function HeroCarousel() {
       </Button>
 
       {/* Indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 ">
         {slides.map((_, index) => (
           <button
             key={index}
