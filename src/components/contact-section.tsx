@@ -12,8 +12,8 @@ export default function ContactSection() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
-    college: "",
+    // phone: "",
+    // college: "",
     message: "",
   })
 
@@ -30,8 +30,8 @@ export default function ContactSection() {
     setFormData({
       name: "",
       email: "",
-      phone: "",
-      college: "",
+      // phone: "",
+      // college: "",
       message: "",
     })
   }
@@ -39,7 +39,7 @@ export default function ContactSection() {
   return (
     <section id="contact" className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Contact Us</h2>
+        <h2 className="text-3xl font-bold text-center mb-12 text-black">📞Contact Us</h2>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Contact Form */}
@@ -70,7 +70,7 @@ export default function ContactSection() {
                 />
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
@@ -93,7 +93,7 @@ export default function ContactSection() {
                   value={formData.college}
                   onChange={handleChange}
                 />
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="message">Message or Issue</Label>
@@ -115,7 +115,7 @@ export default function ContactSection() {
           </div>
 
           {/* Map */}
-          <div className="h-[450px] rounded-lg overflow-hidden shadow-md">
+          <div className="h-[380px] rounded-lg overflow-hidden shadow-md">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4267.317479943942!2d72.90900817563053!3d19.04851155283403!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c5f39a7d77d1%3A0x9ebbdeaea9ec24ae!2sShah%20%26%20Anchor%20Kutchhi%20Engineering%20College!5e1!3m2!1sen!2sin!4v1740672413456!5m2!1sen!2sin"
               width="100%"

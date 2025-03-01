@@ -70,7 +70,7 @@ const teamData = {
       { name: "ARYAAN GALA", role: "HEAD", year: "TE", imageSrc: "/team/aryaan.webp" },
       { name: "DEEP ADAK", role: "CO-HEAD", year: "TE", imageSrc: "/team/deep.webp" },
       { name: "SUDARSHAN DATE", role: "CO-HEAD", year: "TE", imageSrc: "/team/sudarshan.webp" },
-      { name: "HARSHIL SHETTY", role: "CO-HEAD", year: "SE", imageSrc: "/team/harshil.webp" },
+      { name: "HARSHIL SHETTY", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
       { name: "MONARCH VAKANI", role: "CO-HEAD", year: "SE", imageSrc: "/team/monarch.webp" },
     ],
   },
@@ -79,7 +79,7 @@ const teamData = {
     subtitle: "The voices that amplify our message",
     members: [
       { name: "SAMIKSHA THAKUR", role: "HEAD", year: "TE", imageSrc: "/team/samiksha.webp" },
-      { name: "PRATHAM DUPTE", role: "CO-HEAD", year: "SE", imageSrc: "/team/pratham.webp" },
+      { name: "PRATHAM DUPTE", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
       { name: "VEDANTI DABHOLKAR", role: "CO-HEAD", year: "TE", imageSrc: "/team/vedanti.webp" },
     ],
   },
@@ -89,7 +89,7 @@ const teamData = {
     members: [
       { name: "AACHAL BAFNA", role: "HEAD", year: "TE", imageSrc: "/team/aachal.webp" },
       { name: "OM MITHIYA", role: "HEAD", year: "TE", imageSrc: "/team/om.webp" },
-      { name: "PRANAV GHADGE", role: "CO-HEAD", year: "SE", imageSrc: "/team/pranav.webp" },
+      { name: "PRANAV GHADGE", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
       { name: "DEVASHREE PAWAR", role: "CO-HEAD", year: "SE", imageSrc: "/team/devashree.webp" },
     ],
   },

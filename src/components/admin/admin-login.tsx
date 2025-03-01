@@ -15,10 +15,9 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
   // In a real application, you would verify this against a secure backend
   // This is just for demonstration purposes
-  const ADMIN_PASSWORD = "admin123" // In production, this should be stored securely
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD // In production, this should be stored securely
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
