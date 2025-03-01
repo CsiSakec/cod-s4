@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, AlertCircle, School, User, CreditCard } from "lucide-react"
+import { CheckCircle2, AlertCircle, School, User, CreditCard, Sun, Moon } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { database } from "@/firebaseConfig"
@@ -54,7 +54,8 @@ const formSchema = z.object({
   participantType: z.array(z.enum(["inter", "intra"])).optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   year: z.string().min(1, { message: "Please select your year." }),
-  branch: z.string().min(1, { message: "Please select your branch." }),
+  branch: z.string().min(2, { message: "Branch is required" }),
+  otherBranch: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z
     .string()
@@ -87,6 +88,7 @@ export default function RegistrationForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,6 +98,7 @@ export default function RegistrationForm() {
       name: "",
       year: "",
       branch: "",
+      otherBranch: "",
       email: "",
       phone: "",
       prn: "",
@@ -158,7 +161,7 @@ export default function RegistrationForm() {
           phone: values.phone,
           college: values.college,
           year: values.year,
-          branch: values.branch,
+          branch: values.branch === "OTHER" ? values.otherBranch : values.branch,
           prn: isFromSakec === "yes" ? values.prn : null,
           educationType: isFromSakec === "no" ? educationType : null,
         },
@@ -188,62 +191,48 @@ export default function RegistrationForm() {
           to: values.email,
           subject: "CSI-SAKEC COD4 Registration Confirmation",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0;">
-  <div style="background-color: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-    
-   
-    <h1 style="color: #4a90e2; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
-    
-    <p style="font-size: 16px; margin-bottom: 15px; text-align: left;">
-      Dear ${values.name},
-    </p>
-    <p style="font-size: 16px; margin-bottom: 15px; text-align: left;">
-      Thank you for registering for <strong>CSI-SAKEC CALL OF DUTY - SEASON 4!</strong> Your registration has been successfully received.
-    </p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h1 style="color: #1a73e8; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
+                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                  Dear ${values.name},
+                </p>
+                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                  Thank you for registering for CSI-SAKEC CALL OF DUTY - SEASON 4! Your registration has been successfully received.
+                </p>
+                
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
+                  <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
+                    <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
+                    <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
+                    <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
+                    <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
+                    <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
+                    <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
+                    <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
+                    <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
+                  </ul>
+                </div>
 
-    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
-      <h2 style="color: #4a90e2; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
-      <ul style="list-style: none; padding: 0; margin: 0;">
-        <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
-        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
-        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
-        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
-        <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
-        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
-        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
-        <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
-        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
-      </ul>
-    </div>
+                <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
+                  <ul style="margin: 0; padding-left: 20px;">
+                    ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
+                  </ul>
+                </div>
 
-    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
-      <h3 style="color: #4a90e2; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
-      <ul style="margin: 0; padding-left: 20px;">
-        ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
-      </ul>
-    </div>
+                <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
+                  <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
+                  and updates about the event on this email address.
+                </p>
 
-    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
-      <h3 style="color: #4a90e2; font-size: 16px; margin-bottom: 10px;">Join the WhatsApp Group:</h3>
-      <p style="font-size: 14px; margin-bottom: 10px;">Stay updated with event details and announcements:</p>
-      <p style="text-align: center;">
-        <a href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH" target="_blank" style="display: inline-block; padding: 10px 15px; background-color: #25d366; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Join WhatsApp Group
-        </a>
-      </p>
-    </div>
-
-    <p style="font-size: 14px; margin-top: 20px; text-align: left;">
-      <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
-      and updates about the event on this email address.
-    </p>
-
-    <div style="margin-top: 30px; text-align: center; font-size: 14px;">
-      <p>Best regards,<br><strong>CSI-SAKEC Team</strong></p>
-    </div>
-  </div>
-</div>
-
+                <div style="margin-top: 30px; text-align: center; color: #5f6368; font-size: 14px;">
+                  <p>Best regards,<br>CSI-SAKEC Team</p>
+                </div>
+              </div>
+            </div>
           `
         };
 
@@ -464,8 +453,8 @@ export default function RegistrationForm() {
   const getAvailableRounds = () => {
     if (isFromSakec === "yes") {
       // For SAKEC students, use updated round names
-      return year === "FE" || year === "SE" 
-        ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"] 
+      return year === "FE" || year === "SE"
+        ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
         : ["Advanced(round2)", "Open(round3)"]
     } else if (isFromSakec === "no") {
       if (educationType === "diploma") {
@@ -473,8 +462,8 @@ export default function RegistrationForm() {
         return ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
       } else if (educationType === "bachelors") {
         // Bachelors year logic
-        return year === "FE" || year === "SE" 
-          ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"] 
+        return year === "FE" || year === "SE"
+          ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
           : ["Advanced(round2)", "Open(round3)"]
       }
     }
@@ -491,24 +480,24 @@ export default function RegistrationForm() {
   }, [isFromSakec, form])
 
   return (
-    <div className="min-h-screen">
-      <div className="p-4 md:p-8 bg-gray-900 min-h-screen">
-        <Card className="w-full shadow-lg bg-gray-800">
+    <div className={`min-h-screen`}>
+      <div className="p-4 md:p-8 bg-background  min-h-screen">
+
+
+        <Card className="w-full shadow-lg bg-card ">
           <CardContent className="p-6">
             <div className="flex justify-between mb-6">
               {[1, 2, 3, 4].map((stepNumber) => (
                 <div
                   key={stepNumber}
-                  className={`flex flex-col items-center ${
-                    step >= stepNumber ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className={`flex flex-col items-center ${step >= stepNumber ? "text-primary" : "text-muted-foreground"
+                    }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                      step >= stepNumber
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${step >= stepNumber
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground dark:bg-gray-700"
-                    }`}
+                        : "bg-muted text-muted-foreground"
+                      }`}
                   >
                     {stepNumber}
                   </div>
@@ -713,7 +702,6 @@ export default function RegistrationForm() {
                               <FormControl>
                                 <Input placeholder="Enter your PRN number" {...field} />
                               </FormControl>
-                              <FormDescription>Enter your Permanent Registration Number</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -800,6 +788,22 @@ export default function RegistrationForm() {
                           </FormItem>
                         )}
                       />
+
+                      {form.watch("branch") === "OTHER" && (
+                        <FormField
+                          control={form.control}
+                          name="otherBranch"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Specify Branch 🔍</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter your branch name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
 
                     <div className="pt-4 flex justify-between">
@@ -855,20 +859,20 @@ export default function RegistrationForm() {
 
                     {/* Show intra-college section if intra is selected */}
                     {participantTypes.includes("intra") && (
-                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 mb-6">
-                        <div className="flex items-center text-green-800 dark:text-green-300 mb-2">
+                      <div className="bg-green-50  p-4 rounded-lg border border-green-200  mb-6">
+                        <div className="flex items-center text-green-800  mb-2">
                           <CheckCircle2 className="w-5 h-5 mr-2" />
                           <h3 className="font-semibold">Intra-College Participation</h3>
                         </div>
-                        <p className="text-green-700 dark:text-green-400">
+                        <p className="text-green-700 0">
                           For intra-college participants, there is only one round available. You are automatically
                           registered for this round.
                         </p>
-                        <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-md border border-green-200 dark:border-green-800">
-                          <p className="font-medium text-green-800 dark:text-green-300">
+                        <div className="mt-4 p-3 bg-white  rounded-md border border-green-200 ">
+                          <p className="font-medium text-green-800 ">
                             Registration Fee: ₹{isCsiMember === "yes" ? "30" : "50"}
                           </p>
-                          <p className="text-sm text-green-700 dark:text-green-400">
+                          <p className="text-sm text-green-700 ">
                             {isCsiMember === "yes" ? "CSI Member Price" : "Non-CSI Member Price"}
                           </p>
                         </div>
@@ -930,7 +934,7 @@ export default function RegistrationForm() {
                                     </label>
                                   </div>
                                 )}
-                                
+
                               </div>
                               <FormDescription>
                                 {isFromSakec === "yes"
@@ -946,11 +950,11 @@ export default function RegistrationForm() {
                           )}
                         />
 
-                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                          <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                        <div className="mt-4 p-4 bg-blue-50  rounded-md border border-blue-200 ">
+                          <h3 className="font-semibold text-blue-800  mb-2">
                             Inter-College Price Calculation
                           </h3>
-                          <p className="text-blue-700 dark:text-blue-400 mb-2">
+                          <p className="text-blue-700  mb-2">
                             <span className="font-medium">Price per round:</span> ₹
                             {isFromSakec === "yes" && isCsiMember === "yes" ? "100" : "150"}
                             <span className="text-sm ml-2">
@@ -959,7 +963,7 @@ export default function RegistrationForm() {
                                 : "(Standard Price)"}
                             </span>
                           </p>
-                          <p className="text-blue-700 dark:text-blue-400 mb-2">
+                          <p className="text-blue-700  mb-2">
                             <span className="font-medium">Selected rounds:</span> {selectedRounds.length}
                           </p>
                         </div>
@@ -968,11 +972,11 @@ export default function RegistrationForm() {
 
                     {/* Show total price calculation if any participant type is selected */}
                     {(participantTypes.includes("inter") || participantTypes.includes("intra")) && (
-                      <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
-                        <h3 className="font-semibold text-purple-800 dark:text-purple-300 mb-2">
+                      <div className="mt-4 p-4 bg-purple-50  rounded-md border border-purple-200 ">
+                        <h3 className="font-semibold text-purple-800  mb-2">
                           Total Registration Cost
                         </h3>
-                        <p className="text-lg font-bold text-purple-800 dark:text-purple-300">
+                        <p className="text-lg font-bold text-purple-800 ">
                           Total Amount: ₹{totalPrice}
                         </p>
                       </div>
@@ -998,35 +1002,35 @@ export default function RegistrationForm() {
                       <p className="text-muted-foreground">Make payment and upload proof</p>
                     </div>
 
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
-                      <h3 className="font-semibold flex items-center text-blue-800 dark:text-blue-300 mb-2">
+                    <div className="bg-blue-50  p-4 rounded-lg border border-blue-200  mb-6">
+                      <h3 className="font-semibold flex items-center text-blue-800  mb-2">
                         <AlertCircle className="w-5 h-5 mr-2" /> Payment Information
                       </h3>
 
                       {/* Final amount display at the top */}
-                      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Amount to Pay</h4>
-                        <p className="text-2xl font-bold text-blue-800 dark:text-blue-300">₹{totalPrice}</p>
-                        <p className="text-sm text-blue-700 dark:text-blue-400 mt-2">
+                      <div className="p-4 bg-white  rounded-lg border border-blue-200   mb-4">
+                        <h4 className="font-semibold text-blue-800    mb-2">Amount to Pay</h4>
+                        <p className="text-2xl font-bold text-blue-800   ">₹{totalPrice}</p>
+                        <p className="text-sm text-blue-700     mt-2">
                           <strong>Note:</strong> Please include your name and email in the payment reference.
                         </p>
                       </div>
 
-                      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Bank Transfer Details</h4>
-                        <p className="text-blue-700 dark:text-blue-400 mb-1">
+                      <div className="p-4 bg-white  rounded-lg border border-blue-200   mb-4">
+                        <h4 className="font-semibold text-blue-800    mb-2">Bank Transfer Details</h4>
+                        <p className="text-blue-700     mb-1">
                           <span className="font-medium">Account Name:</span> CSI SAKE
                         </p>
-                        <p className="text-blue-700 dark:text-blue-400 mb-1">
+                        <p className="text-blue-700     mb-1">
                           <span className="font-medium">Account Number:</span> 8678101300391
                         </p>
-                        <p className="text-blue-700 dark:text-blue-400 mb-1">
+                        <p className="text-blue-700     mb-1">
                           <span className="font-medium">IFSC Code:</span> CNRB0000105
                         </p>
-                        <p className="text-blue-700 dark:text-blue-400 mb-1">
+                        <p className="text-blue-700     mb-1">
                           <span className="font-medium">Bank:</span> Canara Bank
                         </p>
-                        <p className="text-blue-700 dark:text-blue-400">
+                        <p className="text-blue-700    ">
                           <span className="font-medium">Branch:</span> MUMBAI CHEMBUR MAIN
                         </p>
                       </div>
@@ -1111,4 +1115,3 @@ export default function RegistrationForm() {
     </div>
   )
 }
-
