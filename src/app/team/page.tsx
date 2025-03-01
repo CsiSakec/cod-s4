@@ -93,6 +93,18 @@ const teamData = {
       { name: "DEVASHREE PAWAR", role: "CO-HEAD", year: "SE", imageSrc: "/team/devashree.webp" },
     ],
   },
+  // magazineTeam: {
+  //   title: "Magzine Team",
+  //   subtitle: "The storytellers documenting our journey",
+  //   members: [
+  //     { name: "SONIKA KULKARNI", role: "HEAD", year: "TE", imageSrc: "/team/image.png" },
+  //     { name: "MANSI SHENDGE", role: "HEAD", year: "TE", imageSrc: "/team/image.png" },
+  //     { name: "lessgo", role: "HEAD", year: "SE", imageSrc: "/team/image.png" },
+  //     { name: "DEVASHREE PAWAR", role: "HEAD", year: "SE", imageSrc: "/team/image.png" },
+  //     { name: "DEVASHREE PAWAR", role: "HEAD", year: "SE", imageSrc: "/team/image.png" },
+  //     { name: "DEVASHREE PAWAR", role: "HEAD", year: "SE", imageSrc: "/team/image.png" },
+  //   ],
+  // },
 }
 
 const teamOrder = [

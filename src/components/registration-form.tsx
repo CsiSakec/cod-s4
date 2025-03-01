@@ -64,8 +64,8 @@ const formSchema = z.object({
   prn: z
     .string()
     .optional()
-    .refine((val) => !val || val.length === 10, {
-      message: "PRN must be 10 digits if provided",
+    .refine((val) => !val || /^[a-zA-Z0-9]{1,14}$/.test(val), {
+      message: "PRN must be alphanumeric and up to 14 characters if provided",
     }),
   college: z.string().min(2, { message: "College name must be at least 2 characters." }),
   isCsiMember: z.enum(["yes", "no"]).optional(),
@@ -201,7 +201,7 @@ export default function RegistrationForm() {
       try {
         const emailData = {
           to: values.email,
-          subject: "CSI-COD Registration Confirmation",
+          subject: "CSI-SAKEC COD4 Registration Confirmation",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -210,7 +210,7 @@ export default function RegistrationForm() {
                   Dear ${values.name},
                 </p>
                 <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                  Thank you for registering for CSI-COD! Your registration has been successfully received.
+                  Thank you for registering for CSI-SAKEC CALL OF DUTY - SEASON 4! Your registration has been successfully received.
                 </p>
                 
                 <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
@@ -241,7 +241,7 @@ export default function RegistrationForm() {
                 </p>
 
                 <div style="margin-top: 30px; text-align: center; color: #5f6368; font-size: 14px;">
-                  <p>Best regards,<br>CSI-COD Team</p>
+                  <p>Best regards,<br>CSI-SAKEC Team</p>
                 </div>
               </div>
             </div>
@@ -461,18 +461,22 @@ export default function RegistrationForm() {
     })
   }
 
-  // Determine available rounds based on education type and year
+  // Update the getAvailableRounds function
   const getAvailableRounds = () => {
     if (isFromSakec === "yes") {
-      // For SAKEC students, use existing year-based logic
-      return year === "FE" || year === "SE" ? ["round1", "round2", "round3"] : ["round2", "round3"]
+      // For SAKEC students, use updated round names
+      return year === "FE" || year === "SE" 
+        ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"] 
+        : ["Advanced(round2)", "Open(round3)"]
     } else if (isFromSakec === "no") {
       if (educationType === "diploma") {
-        // All diploma students can access rounds 1, 2, and 3
-        return ["round1", "round2", "round3"]
+        // All diploma students can access all rounds
+        return ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
       } else if (educationType === "bachelors") {
         // Bachelors year logic
-        return year === "FE" || year === "SE" ? ["round1", "round2", "round3"] : ["round2", "round4"]
+        return year === "FE" || year === "SE" 
+          ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"] 
+          : ["Advanced(round2)", "Open(round3)"]
       }
     }
     return []
@@ -585,13 +589,13 @@ export default function RegistrationForm() {
                                   <FormControl>
                                     <RadioGroupItem value="diploma" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">Diploma (3 years)</FormLabel>
+                                  <FormLabel className="font-normal">Diploma</FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                   <FormControl>
                                     <RadioGroupItem value="bachelors" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">Bachelors (4 years)</FormLabel>
+                                  <FormLabel className="font-normal">Bachelors</FormLabel>
                                 </FormItem>
                               </RadioGroup>
                             </FormControl>
@@ -717,7 +721,7 @@ export default function RegistrationForm() {
                               <FormControl>
                                 <Input placeholder="Enter your PRN number" {...field} />
                               </FormControl>
-                              <FormDescription>Enter your 10-digit Permanent Registration Number</FormDescription>
+                              <FormDescription>Enter your Permanent Registration Number</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -889,66 +893,52 @@ export default function RegistrationForm() {
                             <FormItem>
                               <FormLabel>Select Inter-College Round(s) 🔄</FormLabel>
                               <div className="space-y-3">
-                                {getAvailableRounds().includes("round1") && (
+                                {getAvailableRounds().includes("Rookie(round1)") && (
                                   <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id="round1"
-                                      checked={selectedRounds.includes("round1")}
-                                      onCheckedChange={() => handleRoundSelection("round1")}
+                                      checked={selectedRounds.includes("Rookie(round1)")}
+                                      onCheckedChange={() => handleRoundSelection("Rookie(round1)")}
                                     />
                                     <label
                                       htmlFor="round1"
                                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
-                                      Round 1
+                                      Rookie (Round 1)
                                     </label>
                                   </div>
                                 )}
-                                {getAvailableRounds().includes("round2") && (
+                                {getAvailableRounds().includes("Advanced(round2)") && (
                                   <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id="round2"
-                                      checked={selectedRounds.includes("round2")}
-                                      onCheckedChange={() => handleRoundSelection("round2")}
+                                      checked={selectedRounds.includes("Advanced(round2)")}
+                                      onCheckedChange={() => handleRoundSelection("Advanced(round2)")}
                                     />
                                     <label
                                       htmlFor="round2"
                                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
-                                      Round 2
+                                      Advanced (Round 2)
                                     </label>
                                   </div>
                                 )}
-                                {getAvailableRounds().includes("round3") && (
+                                {getAvailableRounds().includes("Open(round3)") && (
                                   <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id="round3"
-                                      checked={selectedRounds.includes("round3")}
-                                      onCheckedChange={() => handleRoundSelection("round3")}
+                                      checked={selectedRounds.includes("Open(round3)")}
+                                      onCheckedChange={() => handleRoundSelection("Open(round3)")}
                                     />
                                     <label
                                       htmlFor="round3"
                                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
-                                      Round 3
+                                      Open (Round 3)
                                     </label>
                                   </div>
                                 )}
-                                {getAvailableRounds().includes("round4") && (
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="round4"
-                                      checked={selectedRounds.includes("round4")}
-                                      onCheckedChange={() => handleRoundSelection("round4")}
-                                    />
-                                    <label
-                                      htmlFor="round4"
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      Round 4
-                                    </label>
-                                  </div>
-                                )}
+                                
                               </div>
                               <FormDescription>
                                 {isFromSakec === "yes"

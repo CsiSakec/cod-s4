@@ -47,6 +47,7 @@ interface Registration {
     csiProof: string | null
   }
   status: "pending" | "approved" | "rejected"
+  arrived: "yes" | "no"
   createdAt: string
 }
 
@@ -118,6 +119,17 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleArrivedChange = async (id: string, arrived: string) => {
+    try {
+      const registrationRef = ref(database, `registrations/${id}`)
+      await update(registrationRef, { arrived })
+      toast.success(`Arrival status updated to ${arrived}`)
+    } catch (error) {
+      toast.error("Failed to update arrival status")
+      console.error("Error updating arrival status:", error)
+    }
+  }
+
   const handleDeleteRegistration = async (id: string) => {
     try {
       const registrationRef = ref(database, `registrations/${id}`)
@@ -166,6 +178,7 @@ export default function AdminDashboard() {
       "Selected Rounds",
       "Total Price",
       "Status",
+      "Arrived",
       "Created At",
     ]
 
@@ -185,6 +198,7 @@ export default function AdminDashboard() {
       reg.participationDetails.selectedRounds.join(", "),
       reg.participationDetails.totalPrice,
       reg.status,
+      reg.arrived || "no",
       reg.createdAt,
     ])
 
@@ -208,15 +222,25 @@ export default function AdminDashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Registration Management</CardTitle>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={exportToCSV}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button variant="destructive" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-center">
+              <span className="text-sm text-muted-foreground">Total Registrations</span>
+              <span className="text-2xl font-bold">{registrations.length}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-sm text-muted-foreground">Coders Arrived</span>
+              <span className="text-2xl font-bold">{registrations.filter((reg) => reg.arrived === "yes").length}</span>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={exportToCSV}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button variant="destructive" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -259,6 +283,7 @@ export default function AdminDashboard() {
                     <TableHead>Transaction ID</TableHead>
                     <TableHead>Proof</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Arrived</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -295,6 +320,20 @@ export default function AdminDashboard() {
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="approved">Approved</SelectItem>
                             <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          defaultValue={registration.arrived || "no"}
+                          onValueChange={(value) => handleArrivedChange(registration.id, value)}
+                        >
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue placeholder="Arrived" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">Yes</SelectItem>
+                            <SelectItem value="no">No</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -409,13 +448,14 @@ export default function AdminDashboard() {
                       {selectedRegistration.participationDetails.totalPrice}
                     </p>
                     <p>
-                    <p>
-                        <span className="font-medium">Transaction ID: </span> {selectedRegistration.participationDetails.transactionID}
-                      </p>
+                      <span className="font-medium">Transaction ID: </span>{" "}
+                      {selectedRegistration.participationDetails.transactionID}
                     </p>
                     <p>
-                    
                       <span className="font-medium">Status:</span> {selectedRegistration.status}
+                    </p>
+                    <p>
+                      <span className="font-medium">Arrived:</span> {selectedRegistration.arrived || "no"}
                     </p>
                     <p>
                       <span className="font-medium">Created At:</span>{" "}
@@ -558,6 +598,26 @@ export default function AdminDashboard() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-arrived">Arrived</Label>
+                <Select
+                  value={selectedRegistration.arrived || "no"}
+                  onValueChange={(value: "yes" | "no") =>
+                    setSelectedRegistration({
+                      ...selectedRegistration,
+                      arrived: value,
+                    })
+                  }
+                >
+                  <SelectTrigger id="edit-arrived">
+                    <SelectValue placeholder="Select arrived status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -603,7 +663,7 @@ export default function AdminDashboard() {
           </DialogHeader>
           {selectedRegistration && (
             <div className="flex flex-col items-center justify-center max-h-[70vh] overflow-y-auto">
-               <img
+              <img
                 src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
                 alt="Payment Proof"
                 className="w-full h-auto max-h-[500px] object-contain border rounded-md mt-7"

@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Logo and About */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center">
@@ -58,44 +58,14 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#contact" className="text-gray-400 hover:text-white transition-colors">
-                  Contact
+                <Link href="/rulesandregulation" className="text-gray-400 hover:text-white transition-colors">
+                  Rules & Regulations
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Tournament Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Tournament Info</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Rules & Regulations
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Schedule
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Prizes
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  FAQs
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Past Winners
-                </Link>
-              </li>
-            </ul>
-          </div>
+          
 
           {/* Contact Info */}
           <div>
