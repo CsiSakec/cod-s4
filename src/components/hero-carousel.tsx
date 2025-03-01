@@ -14,7 +14,7 @@ const slides = [
   },
   {
     id: 2,
-    image: "/team.jpg",
+    image: "/banner1.png",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
