@@ -68,7 +68,7 @@ export function Rules() {
                 <div className="border rounded-lg p-4 bg-gradient-to-b from-amber-50 to-transparent border-amber-200">
                   <h3 className="font-medium mb-2 text-amber-600">Prize Worth</h3>
                   <ul className="space-y-2 text-muted-foreground">
-                    <li>Prize Worth <b>30,000</b></li>
+                    <li>Prize Worth <b>₹30,000</b></li>
                   </ul>
                 </div>
                 <div className="border rounded-lg p-4 bg-gradient-to-b from-slate-50 to-transparent border-slate-200">

@@ -22,7 +22,7 @@ export default function DescriptionSection() {
             <p className="text-lg text-gray-600">
               The event features thrilling DSA challenges and competitive
               programming contests with categories for all skill levels—Rookie,
-              Advanced, and Open. With prizes worth ₹30,000 and exciting goodies
+              Advanced, and Open. With prizes worth <b>₹30,000</b> and exciting goodies
               for all participants, this is your chance to sharpen your skills,
               push your limits, and emerge victorious!
             </p>

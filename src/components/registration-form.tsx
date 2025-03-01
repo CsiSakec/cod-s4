@@ -70,7 +70,16 @@ const formSchema = z.object({
     }),
   college: z.string().min(2, { message: "College name must be at least 2 characters." }),
   isCsiMember: z.enum(["yes", "no"]).optional(),
-  rounds: z.array(z.string()).optional(),
+  rounds: z.array(z.string()).refine(
+    (rounds) => {
+      // Create a custom validation function that only takes rounds as parameter
+      const data = rounds as string[];
+      return data.length > 0;
+    },
+    {
+      message: "Please select at least one round for inter-college participation"
+    }
+  ).optional(),
   transactionID: z.string().min(2, { message: "Please enter it" }),
   paymentProof: z.any().optional(),
   csiProof: z.any().optional(),
@@ -311,12 +320,22 @@ export default function RegistrationForm() {
       }
 
       if (step === 3) {
+        // Validate CSI membership selection for SAKEC students
         if (isFromSakec === "yes" && !isCsiMember) {
           toast.error("Please indicate if you are a CSI SAKEC member")
           return
         }
 
-        if (participantTypes.includes("inter") && selectedRounds.length === 0 && !participantTypes.includes("intra")) {
+        // Validate round selection for inter-college participants
+        if (participantTypes.includes("inter")) {
+          if (selectedRounds.length === 0) {
+            toast.error("Please select at least one round for inter-college participation")
+            return
+          }
+        }
+
+        // If only inter is selected (no intra), enforce round selection
+        if (participantTypes.includes("inter") && !participantTypes.includes("intra") && selectedRounds.length === 0) {
           toast.error("Please select at least one round for inter-college participation")
           return
         }
@@ -403,33 +422,33 @@ export default function RegistrationForm() {
   }
 
   const calculateTotalPrice = () => {
-    if (participantTypes.length === 0 || (participantTypes.includes("inter") && selectedRounds.length === 0)) {
-      setTotalPrice(0)
-      return
-    }
-
-    const isCSIMember = isCsiMember === "yes"
-    let totalCost = 0
-
-    // Calculate inter-college cost
-    if (participantTypes.includes("inter")) {
-      const pricePerRound = isFromSakec === "yes" && isCSIMember ? 100 : 150
-      totalCost += selectedRounds.length * pricePerRound
-    }
-
-    // Add intra-college cost
+    let totalCost = 0;
+    const isCSIMember = isCsiMember === "yes";
+  
+    // Calculate intra-college cost immediately when selected
     if (participantTypes.includes("intra")) {
-      const intraPrice = isCSIMember ? 30 : 50
-      totalCost += intraPrice
+      const intraPrice = isCSIMember ? 30 : 50;
+      totalCost += intraPrice;
     }
-
-    setTotalPrice(totalCost)
-  }
-
-  // Update price when relevant values change
+  
+    // Calculate inter-college cost only if rounds are selected
+    if (participantTypes.includes("inter")) {
+      if (selectedRounds.length > 0) {
+        const pricePerRound = isFromSakec === "yes" && isCSIMember ? 100 : 150;
+        totalCost += selectedRounds.length * pricePerRound;
+      } else {
+        // If inter is selected but no rounds are chosen, only show intra cost if applicable
+        totalCost = participantTypes.includes("intra") ? totalCost : 0;
+      }
+    }
+  
+    setTotalPrice(totalCost);
+  };
+  
+  // Update useEffect to recalculate price when participant types change
   useEffect(() => {
-    calculateTotalPrice()
-  }, [participantTypes, isCsiMember, selectedRounds, isFromSakec])
+    calculateTotalPrice();
+  }, [participantTypes, isCsiMember, selectedRounds, isFromSakec]);
 
   const handleRoundSelection = (round: string) => {
     setSelectedRounds((prev) => {
