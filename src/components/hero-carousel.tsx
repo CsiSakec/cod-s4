@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const slides = [
   {
@@ -12,7 +14,7 @@ const slides = [
   },
   {
     id: 2,
-    image: "/banner1.png",
+    image: "/team.jpg",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
@@ -46,27 +48,26 @@ export default function HeroCarousel() {
   return (
     <div className="relative w-full h-[30vh] overflow-hidden sm:h-[90vh]">
       {slides.map((slide, index) => (
-  <div
-    key={slide.id}
-    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${
-      index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
-    }`}
-  >
-    <div className="relative w-full h-full">
-      <Image
-        src={slide.image || "/placeholder.svg"}
-        alt={slide.title}
-        fill
-        className="object-fill"
-        priority={index === 0}
-        sizes="100vw"
-      />
-    </div>
-  </div>
-))}
+        <div
+          key={slide.id}
+          className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ease-in-out ${
+            index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="relative w-full h-full pb-[38%]">
+            <Image
+              src={slide.image || "/placeholder.svg"}
+              alt={slide.title}
+              fill
+              className="object-fill"
+              priority={index === 0}
+            />
+          </div>
+        </div>
+      ))}
 
       {/* Navigation buttons */}
-      {/* <Button
+      <Button
         variant="outline"
         size="icon"
         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white rounded-full"
@@ -84,7 +85,7 @@ export default function HeroCarousel() {
       >
         <ChevronRight className="h-6 w-6" />
         <span className="sr-only">Next slide</span>
-      </Button> */}
+      </Button>
 
       {/* Indicators */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 ">
@@ -101,4 +102,3 @@ export default function HeroCarousel() {
     </div>
   )
 }
-
