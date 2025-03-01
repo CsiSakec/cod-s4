@@ -17,7 +17,7 @@ export function Rules() {
       </div>
 
       <Tabs defaultValue="overview" className="max-w-4xl mx-auto">
-        <TabsList className="grid w-[400px] grid-cols-2 md:grid-cols-3 mx-auto mb-8">
+        <TabsList className="grid w-[400px] grid-cols-3 md:grid-cols-3 mx-auto mb-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
           {/* <TabsTrigger value="judging">Judging</TabsTrigger> */}
@@ -37,19 +37,19 @@ export function Rules() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Registration Period</h3>
-                  <p className="text-muted-foreground">March 15 - April 10, 2025</p>
+                  <p className="text-muted-foreground">March 01 - March 20, 2025</p>
                 </div>
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Qualification Round</h3>
-                  <p className="text-muted-foreground">April 15 - April 20, 2025</p>
+                  <h3 className="font-medium mb-2">Rookie Round</h3>
+                  <p className="text-muted-foreground">March 21,2025 10:30am to 11:30am</p>
                 </div>
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Semi-Finals</h3>
-                  <p className="text-muted-foreground">May 1 - May 5, 2025</p>
+                  <h3 className="font-medium mb-2">Advanced Round</h3>
+                  <p className="text-muted-foreground">March 21,2025 12:00pm to 01:00pm</p>
                 </div>
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Grand Finale</h3>
-                  <p className="text-muted-foreground">May 15, 2025</p>
+                  <h3 className="font-medium mb-2">Open Round</h3>
+                  <p className="text-muted-foreground">March 21,2025 02:00pm to 03:00pm</p>
                 </div>
               </div>
             </CardContent>
@@ -61,39 +61,33 @@ export function Rules() {
                 <Medal className="h-5 w-5" />
                 Prizes & Rewards
               </CardTitle>
-              <CardDescription>What you can win</CardDescription>
+              <CardDescription>What you can win </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border rounded-lg p-4 bg-gradient-to-b from-amber-50 to-transparent border-amber-200">
-                  <h3 className="font-medium mb-2 text-amber-600">1st Place</h3>
+                  <h3 className="font-medium mb-2 text-amber-600">Prize Worth</h3>
                   <ul className="space-y-2 text-muted-foreground">
-                    <li>$10,000 Cash Prize</li>
-                    <li>Internship Opportunity</li>
-                    <li>Pro Developer Pack</li>
-                    <li>Trophy & Certificate</li>
+                    <li>Prize Worth <b>30,000</b></li>
                   </ul>
                 </div>
                 <div className="border rounded-lg p-4 bg-gradient-to-b from-slate-50 to-transparent border-slate-200">
-                  <h3 className="font-medium mb-2 text-slate-600">2nd Place</h3>
+                  <h3 className="font-medium mb-2 text-slate-600">Winner's & Certificate</h3>
                   <ul className="space-y-2 text-muted-foreground">
-                    <li>$5,000 Cash Prize</li>
-                    <li>Pro Developer Pack</li>
-                    <li>Trophy & Certificate</li>
+                    <li>Each Round has 2 winner's</li>
+                    <li>Cash prize for winner</li>
+                    <li>Certificate</li>
                   </ul>
                 </div>
                 <div className="border rounded-lg p-4 bg-gradient-to-b from-orange-50 to-transparent border-orange-200">
-                  <h3 className="font-medium mb-2 text-orange-600">3rd Place</h3>
+                  <h3 className="font-medium mb-2 text-orange-600">Goodie's</h3>
                   <ul className="space-y-2 text-muted-foreground">
-                    <li>$2,500 Cash Prize</li>
-                    <li>Developer Pack</li>
-                    <li>Trophy & Certificate</li>
+                    <li>All participant will get some perk's.</li>
                   </ul>
                 </div>
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -106,138 +100,116 @@ export function Rules() {
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
-                  <span>Open to all students enrolled in an accredited educational institution</span>
+                  <span>Open to students pursuing B.E., B.Tech, B.Sc, or Diploma in engineering or related fields.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
-                  <span>Participants must be at least 16 years of age</span>
+                  <span>Participants must be at least 16 years of age.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
-                  <span>Both individual participants and teams of up to 3 members are allowed</span>
+                  <span>Ideal for individuals passionate about coding, Data Structures & Algorithms (DSA), or competitive programming.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
-                  <span>Previous winners may participate but are subject to different evaluation criteria</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Employees of sponsoring organizations and their immediate family members are not eligible</span>
+                  <span>Only individual participation is allowed, team entries are not permitted.</span>
                 </li>
               </ul>
             </CardContent>
           </Card>
+
         </TabsContent>
 
         <TabsContent value="rules" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code className="h-5 w-5" />
-                Competition Format
-              </CardTitle>
-              <CardDescription>How the competition works</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Qualification Round</h3>
-                  <p className="text-muted-foreground">
-                    Online round with algorithmic problems to be solved within a 48-hour window. Top 100 participants
-                    advance to the semi-finals.
-                  </p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Semi-Finals</h3>
-                  <p className="text-muted-foreground">
-                    Project-based challenge where participants build a solution to a real-world problem within 5 days.
-                    Top 10 advance to the finals.
-                  </p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Grand Finale</h3>
-                  <p className="text-muted-foreground">
-                    Live 8-hour hackathon where finalists build and present their solutions to a panel of industry
-                    experts.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <AlertCircle className="h-5 w-5" />
+      Submission Guidelines & Rules
+    </CardTitle>
+    <CardDescription>Ensure compliance with these rules to participate</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ul className="space-y-2">
+      {/* Submission Guidelines */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>All code must be original and created during the competition period.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Open-source libraries and frameworks are allowed but must be properly attributed.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Submissions must include source code and documentation.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Code must be submitted through the official competition platform before the deadline.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Late submissions will not be accepted under any circumstances.</span>
+      </li>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5" />
-                Submission Guidelines
-              </CardTitle>
-              <CardDescription>Requirements for your submissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>All code must be original and created during the competition period</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Open-source libraries and frameworks are allowed, but must be properly attributed</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Submissions must include source code and documentation</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Code must be submitted through the official competition platform before the deadline</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Late submissions will not be accepted under any circumstances</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>For the final round, participants must prepare a 5-minute presentation of their solution</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+      {/* ID Cards */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Participants must wear their current academic year ID cards throughout the contest.</span>
+      </li>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Time Constraints
-              </CardTitle>
-              <CardDescription>Time limits for each round</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Qualification Round: 48 hours to solve algorithmic problems</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Semi-Finals: 5 days to complete the project challenge</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Grand Finale: 8-hour live hackathon followed by presentations</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>All deadlines are based on Coordinated Universal Time (UTC)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>
-                    Extensions will not be granted except in cases of major technical issues affecting all participants
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+      {/* Registration */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Participants must register on the official website of CODE OFF DUTY: SEASON 4 to compete.</span>
+      </li>
+
+      {/* Contest Duration */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>The contest will run for 1 hour, and participants must submit their solutions within the given time frame.</span>
+      </li>
+
+      {/* Levels of Participation */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>
+          Participants can compete in the level corresponding to their year of study or higher:
+          <ul className="pl-4 mt-1 list-disc space-y-1">
+            <li><span className="font-semibold">Rookie:</span> (FE/SE – 1st & 2nd Year Students)</li>
+            <li><span className="font-semibold">Advanced:</span> (TE/BE – 3rd & 4th Year Students)</li>
+            <li><span className="font-semibold">Open:</span> (Open for All)</li>
+          </ul>
+        </span>
+      </li>
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>Participants cannot compete in a level lower than their year of study (e.g., a TE student cannot compete in the Rookie level).</span>
+      </li>
+
+      {/* Programming Languages */}
+      <li className="flex items-start gap-2">
+        <span className="text-primary mt-1">•</span>
+        <span>
+          Supported programming languages include:
+          <ul className="pl-4 mt-1 list-disc space-y-1">
+            <li>C, C++, Java, Python, JavaScript (Node.js), TypeScript</li>
+            <li>Go, Rust, PHP, Kotlin, Ruby, Swift</li>
+            <li>C#, Scala, Lua, Perl, Haskell, Shell</li>
+          </ul>
+        </span>
+      </li>
+
+      {/* Plagiarism Policy */}
+      <li className="flex items-start gap-2 text-red-600">
+        <span className="text-primary mt-1">•</span>
+        <span><strong>Strictly Prohibited:</strong> Any form of plagiarism or cheating will result in immediate disqualification.</span>
+      </li>
+    </ul>
+  </CardContent>
+</Card>
+
         </TabsContent>
 
         <TabsContent value="conduct" className="space-y-6">
@@ -266,7 +238,7 @@ export function Rules() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
-                  <span>Collaborate respectfully with team members and other participants</span>
+                  <span>Collaborate respectfully with other participants</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
@@ -322,40 +294,6 @@ export function Rules() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Intellectual Property</CardTitle>
-              <CardDescription>Ownership of submitted code and ideas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Participants retain ownership of their intellectual property</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>
-                    By participating, you grant the organizers a non-exclusive license to showcase your submission for
-                    promotional purposes
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>
-                    Sponsoring organizations may offer separate agreements for projects they wish to develop further
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>
-                    All participants are responsible for ensuring their submissions do not infringe on others'
-                    intellectual property rights
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 

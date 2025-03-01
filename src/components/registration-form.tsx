@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, AlertCircle, School, User, CreditCard, Sun, Moon } from "lucide-react"
+import { CheckCircle2, AlertCircle, School, User, CreditCard } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { database } from "@/firebaseConfig"
@@ -86,21 +86,6 @@ export default function RegistrationForm() {
   const [totalPrice, setTotalPrice] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true) // Default to dark mode
-
-  // Initialize dark mode
-  useEffect(() => {
-    // Apply dark mode class to the document
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [isDarkMode])
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -203,48 +188,62 @@ export default function RegistrationForm() {
           to: values.email,
           subject: "CSI-SAKEC COD4 Registration Confirmation",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h1 style="color: #1a73e8; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
-                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                  Dear ${values.name},
-                </p>
-                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                  Thank you for registering for CSI-SAKEC CALL OF DUTY - SEASON 4! Your registration has been successfully received.
-                </p>
-                
-                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                  <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
-                    <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
-                    <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
-                    <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
-                    <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
-                    <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
-                    <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
-                    <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
-                    <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
-                  </ul>
-                </div>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0;">
+  <div style="background-color: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+    
+   
+    <h1 style="color: #4a90e2; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
+    
+    <p style="font-size: 16px; margin-bottom: 15px; text-align: left;">
+      Dear ${values.name},
+    </p>
+    <p style="font-size: 16px; margin-bottom: 15px; text-align: left;">
+      Thank you for registering for <strong>CSI-SAKEC CALL OF DUTY - SEASON 4!</strong> Your registration has been successfully received.
+    </p>
 
-                <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                  <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
-                  </ul>
-                </div>
+    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
+      <h2 style="color: #4a90e2; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
+        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
+        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
+        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
+        <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
+        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
+        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
+        <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
+        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
+      </ul>
+    </div>
 
-                <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
-                  <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
-                  and updates about the event on this email address.
-                </p>
+    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
+      <h3 style="color: #4a90e2; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
+      <ul style="margin: 0; padding-left: 20px;">
+        ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
+      </ul>
+    </div>
 
-                <div style="margin-top: 30px; text-align: center; color: #5f6368; font-size: 14px;">
-                  <p>Best regards,<br>CSI-SAKEC Team</p>
-                </div>
-              </div>
-            </div>
+    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: left;">
+      <h3 style="color: #4a90e2; font-size: 16px; margin-bottom: 10px;">Join the WhatsApp Group:</h3>
+      <p style="font-size: 14px; margin-bottom: 10px;">Stay updated with event details and announcements:</p>
+      <p style="text-align: center;">
+        <a href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH" target="_blank" style="display: inline-block; padding: 10px 15px; background-color: #25d366; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          Join WhatsApp Group
+        </a>
+      </p>
+    </div>
+
+    <p style="font-size: 14px; margin-top: 20px; text-align: left;">
+      <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
+      and updates about the event on this email address.
+    </p>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 14px;">
+      <p>Best regards,<br><strong>CSI-SAKEC Team</strong></p>
+    </div>
+  </div>
+</div>
+
           `
         };
 
@@ -492,16 +491,9 @@ export default function RegistrationForm() {
   }, [isFromSakec, form])
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`}>
-      <div className="p-4 md:p-8 bg-background dark:bg-gray-900 min-h-screen">
-        <div className="flex justify-end mb-4">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </div>
-
-        <Card className="w-full shadow-lg bg-card dark:bg-gray-800">
+    <div className="min-h-screen">
+      <div className="p-4 md:p-8 bg-gray-900 min-h-screen">
+        <Card className="w-full shadow-lg bg-gray-800">
           <CardContent className="p-6">
             <div className="flex justify-between mb-6">
               {[1, 2, 3, 4].map((stepNumber) => (

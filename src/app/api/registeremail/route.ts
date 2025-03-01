@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   // Define email options
   const mailOptions = {
-    from: `"CSI-COD Web & App Team" <${process.env.EMAIL_USER}>`, // Sender address
+    from: `"CSI-SAKEC TEAM" <${process.env.EMAIL_USER}>`, // Sender address
     to, // Recipient address (team leader's email)
     subject, // Email subject
     text, // Plain text body

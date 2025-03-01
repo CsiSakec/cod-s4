@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { database } from "@/firebaseConfig"
-import { ref, onValue, update, remove } from "firebase/database"
+import { ref, onValue, update, remove, DatabaseReference, get } from "firebase/database"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -108,16 +108,94 @@ export default function AdminDashboard() {
     }
   }, [searchTerm, registrations])
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (participantId: string, newStatus: string) => {
     try {
-      const registrationRef = ref(database, `registrations/${id}`)
-      await update(registrationRef, { status })
-      toast.success(`Status updated to ${status}`)
+      const participantRef = ref(database, `registrations/${participantId}`);
+      await update(participantRef, { status: newStatus });
+  
+      // Get participant data
+      const participantSnapshot = await get(participantRef);
+      const participant = participantSnapshot.val();
+  
+      if (newStatus === 'pending') {
+        toast.success(`Status updated to ${newStatus}`);
+        return; // Exit early without sending an email
+      }
+      
+      // Prepare email data based on status
+      const emailData = {
+        to: participant.personalInfo.email,
+        subject: `CSI-COD Registration ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+        html: newStatus === 'approved' ? `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <h1 style="color: #28a745; text-align: center; margin-bottom: 20px;">Registration Approved!</h1>
+              <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                Dear ${participant.personalInfo.name},
+              </p>
+              <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                Congratulations! Your registration for CSI-SAKEC CALL OF DUTY - SEASON 4 has been approved.
+              </p>
+              <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h3 style="color: #28a745; font-size: 16px; margin-bottom: 10px;">Next Steps:</h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                  <li>Join our Discord server for further updates</li>
+                  <li>Check your email regularly for event details</li>
+                  <li>Get ready for the competition!</li>
+                </ul>
+              </div>
+              <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
+                If you have any questions, feel free to reach out to us.
+              </p>
+            </div>
+          </div>
+        ` : `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <h1 style="color: #dc3545; text-align: center; margin-bottom: 20px;">Registration Status Update</h1>
+              <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                Dear ${participant.personalInfo.name},
+              </p>
+              <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+                We regret to inform you that your registration for CSI-SAKEC CALL OF DUTY - SEASON 4 has been rejected.
+              </p>
+              <div style="background-color: #fdf3f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p style="margin: 0; color: #dc3545;">
+                  This might be due to:
+                  <ul>
+                    <li>Incomplete registration details</li>
+                    <li>Invalid payment proof</li>
+                    <li>Duplicate registration</li>
+                  </ul>
+                </p>
+              </div>
+              <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
+                For any queries, please contact our support team.
+              </p>
+            </div>
+          </div>
+        `
+      };
+  
+      // Send status email
+      const response = await fetch('/api/registeremail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send status email');
+      }
+  
+      toast.success(`Status updated to ${newStatus} and email sent`);
     } catch (error) {
-      toast.error("Failed to update status")
-      console.error("Error updating status:", error)
+      console.error('Status update error:', error);
+      toast.error('Failed to update status or send email');
     }
-  }
+  };
 
   const handleArrivedChange = async (id: string, arrived: string) => {
     try {
@@ -691,4 +769,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
 

@@ -50,7 +50,7 @@ const teamData = {
     subtitle: "The financial experts managing our resources",
     members: [
       { name: "DILIPKUMAR TELI", role: "TREASURER", year: "TE", imageSrc: "/team/dilip.webp" },
-      { name: "SHREYASI GHORBAND", role: "TREASURER", year: "SE", imageSrc: "/team/shreyasi.webp" },
+      { name: "SHREYASI GHORBAND", role: "CO-TREASURER", year: "SE", imageSrc: "/team/shreyasi.webp" },
     ],
   },
   documentationTeam: {
@@ -70,7 +70,7 @@ const teamData = {
       { name: "ARYAAN GALA", role: "HEAD", year: "TE", imageSrc: "/team/aryaan.webp" },
       { name: "DEEP ADAK", role: "CO-HEAD", year: "TE", imageSrc: "/team/deep.webp" },
       { name: "SUDARSHAN DATE", role: "CO-HEAD", year: "TE", imageSrc: "/team/sudarshan.webp" },
-      { name: "HARSHIL SHETTY", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
+      { name: "HARSHIL SHETTY", role: "CO-HEAD", year: "SE", imageSrc: "/team/harshil.webp" },
       { name: "MONARCH VAKANI", role: "CO-HEAD", year: "SE", imageSrc: "/team/monarch.webp" },
     ],
   },
@@ -79,7 +79,7 @@ const teamData = {
     subtitle: "The voices that amplify our message",
     members: [
       { name: "SAMIKSHA THAKUR", role: "HEAD", year: "TE", imageSrc: "/team/samiksha.webp" },
-      { name: "PRATHAM DUPTE", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
+      { name: "PRATHAM DUPTE", role: "CO-HEAD", year: "SE", imageSrc: "/team/pratham.webp" },
       { name: "VEDANTI DABHOLKAR", role: "CO-HEAD", year: "TE", imageSrc: "/team/vedanti.webp" },
     ],
   },
@@ -91,6 +91,20 @@ const teamData = {
       { name: "OM MITHIYA", role: "HEAD", year: "TE", imageSrc: "/team/om.webp" },
       { name: "PRANAV GHADGE", role: "CO-HEAD", year: "SE", imageSrc: "/team/image.png" },
       { name: "DEVASHREE PAWAR", role: "CO-HEAD", year: "SE", imageSrc: "/team/devashree.webp" },
+    ],
+  },
+  developerTeam: {
+    title: "Developer's Team",
+    subtitle: "Your Web, Our Expertise.",
+    members: [
+      {
+        name: "VINAY SAVLA",
+        role: "HEAD",
+        year: "BE",
+        imageSrc: "/team/vinay.webp",
+      },
+      { name: "DEEP ADAK", role: "HEAD", year: "TE", imageSrc: "/team/deep.webp" },
+      { name: "DILIPKUMAR TELI", role: "HEAD", year: "SE", imageSrc: "/team/dilip.webp" },
     ],
   },
   // magazineTeam: {
@@ -117,6 +131,7 @@ const teamOrder = [
   "socialMediaTeam",
   "designTeam",
   // "magazineTeam",
+  "developerTeam",
 ]
 
 export default function TeamPage() {
@@ -131,6 +146,26 @@ export default function TeamPage() {
 
         {teamOrder.map((teamKey) => {
           const team = teamData[teamKey as keyof typeof teamData]
+          // Special handling for treasurer team
+          if (teamKey === "treasurerTeam") {
+            return (
+              <section key={team.title} className="mb-32">
+                <SectionHeading title={team.title} subtitle={team.subtitle} />
+                <div className="flex flex-wrap justify-center gap-8">
+                  {team.members.map((member) => (
+                    <TeamCard
+                      key={member.name}
+                      name={member.name}
+                      role={member.role}
+                      imageSrc={member.imageSrc}
+                    />
+                  ))}
+                </div>
+              </section>
+            )
+          }
+
+          // Regular handling for other teams
           const headMembers = team.members.filter(
             (m) =>
               (m.role.includes("HEAD") && !m.role.includes("CO-HEAD")) ||
