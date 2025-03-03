@@ -17,12 +17,11 @@ export function Rules() {
       </div>
 
       <Tabs defaultValue="overview" className="max-w-4xl mx-auto">
-        <TabsList className="grid w-[400px] grid-cols-3 md:grid-cols-3 mx-auto mb-8">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="rules">Rules</TabsTrigger>
-          {/* <TabsTrigger value="judging">Judging</TabsTrigger> */}
-          <TabsTrigger value="conduct">Conduct</TabsTrigger>
-        </TabsList>
+      <TabsList className="grid w-full max-w-[400px] grid-cols-3 mx-auto mb-8">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="rules">Rules</TabsTrigger>
+        <TabsTrigger value="conduct">Conduct</TabsTrigger>
+      </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <Card>

@@ -298,23 +298,32 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto py-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      
+        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Registration Management</CardTitle>
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col items-center">
-              <span className="text-sm text-muted-foreground">Total Registrations</span>
-              <span className="text-2xl font-bold">{registrations.length}</span>
+          
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
+            {/* Stats */}
+            <div className="flex justify-between sm:flex-col sm:items-center">
+              <div className="flex flex-col items-center">
+                <span className="text-sm text-muted-foreground">Total Registrations</span>
+                <span className="text-2xl font-bold">{registrations.length}</span>
+              </div>
+              <div className="flex flex-col items-center ml-4 sm:ml-0 sm:mt-2">
+                <span className="text-sm text-muted-foreground">Coders Arrived</span>
+                <span className="text-2xl font-bold">
+                  {registrations.filter((reg) => reg.arrived === "yes").length}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-sm text-muted-foreground">Coders Arrived</span>
-              <span className="text-2xl font-bold">{registrations.filter((reg) => reg.arrived === "yes").length}</span>
-            </div>
+
+            {/* Buttons */}
             <div className="flex space-x-2">
-              <Button variant="outline" onClick={exportToCSV}>
+              <Button variant="outline" onClick={exportToCSV} className="flex-1 sm:flex-none">
                 <FileDown className="mr-2 h-4 w-4" />
-                Export CSV
+                Export
               </Button>
-              <Button variant="destructive" onClick={handleLogout}>
+              <Button variant="destructive" onClick={handleLogout} className="flex-1 sm:flex-none">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>

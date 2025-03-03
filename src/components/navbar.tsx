@@ -8,6 +8,11 @@ import { Menu, X } from "lucide-react"
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  // Add this function to handle link clicks
+  const handleLinkClick = () => {
+    setIsMenuOpen(false)
+  }
+
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-100">
       <div className="container mx-auto px-4 py-3">
@@ -45,7 +50,7 @@ export default function Navbar() {
                   title="payment"
                   href="/registration"
                 >
-                  Register Now
+                  Register Now!!!
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 10 10"
@@ -93,18 +98,21 @@ export default function Navbar() {
             <Link
               href="/"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-100"
+              onClick={handleLinkClick}
             >
               Home
             </Link>
             <Link
               href="/about"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-100"
+              onClick={handleLinkClick}
             >
               About
             </Link>
             <Link
               href="/team"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-100"
+              onClick={handleLinkClick}
             >
               Team
             </Link>
@@ -115,8 +123,9 @@ export default function Navbar() {
                   className="group relative inline-flex items-center justify-center text-base rounded-xl bg-gray-900 px-8 py-3 font-semibold text-white transition-all duration-200 hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gray-600/30"
                   title="payment"
                   href="/registration"
+                  onClick={handleLinkClick}
                 >
-                  Register Now
+                  Register Now!!!
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 10 10"
