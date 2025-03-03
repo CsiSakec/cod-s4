@@ -176,8 +176,8 @@ export function Rules() {
         <span>
           Participants can compete in the level corresponding to their year of study or higher:
           <ul className="pl-4 mt-1 list-disc space-y-1">
-            <li><span className="font-semibold">Rookie:</span> (FE/SE – 1st & 2nd Year Students)</li>
-            <li><span className="font-semibold">Advanced:</span> (TE/BE – 3rd & 4th Year Students)</li>
+            <li><span className="font-semibold">Rookie:</span> (Diploma, 1st & 2nd Year students.)</li>
+            <li><span className="font-semibold">Advanced:</span> (3rd & 4th year students.)</li>
             <li><span className="font-semibold">Open:</span> (Open for All)</li>
           </ul>
         </span>
