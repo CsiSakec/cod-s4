@@ -62,20 +62,22 @@ export default function DescriptionSection() {
                   href="/rulesandregulation"
                 >
                   Rules & Regulations
-                  
-            
+
+
                 </a>
               </div>
             </div>
           </div>
 
           {/* Image */}
-          <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
+          <div className="relative aspect-[16/9] md:h-[400px] rounded-lg overflow-hidden shadow-xl">
             <Image
               src="/banner.png"
               alt="Code off Duty - Season 4"
               fill
-              className="object-fit"
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </div>
