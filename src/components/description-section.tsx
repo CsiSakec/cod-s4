@@ -72,7 +72,7 @@ export default function DescriptionSection() {
           {/* Image */}
           <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
             <Image
-              src="/banner1.png"
+              src="/banner.png"
               alt="Code off Duty - Season 4"
               fill
               className="object-fit"
