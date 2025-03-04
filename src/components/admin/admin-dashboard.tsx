@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Toaster, toast } from "sonner"
 import { LogOut, FileDown, MoreVertical, Edit, Trash2, Eye, Search, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // Type definition for registration data
 interface Registration {
@@ -112,16 +113,16 @@ export default function AdminDashboard() {
     try {
       const participantRef = ref(database, `registrations/${participantId}`);
       await update(participantRef, { status: newStatus });
-  
+
       // Get participant data
       const participantSnapshot = await get(participantRef);
       const participant = participantSnapshot.val();
-  
+
       if (newStatus === 'pending') {
         toast.success(`Status updated to ${newStatus}`);
         return; // Exit early without sending an email
       }
-      
+
       // Prepare email data based on status
       const emailData = {
         to: participant.personalInfo.email,
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
           </div>
         `
       };
-  
+
       // Send status email
       const response = await fetch('/api/registeremail', {
         method: 'POST',
@@ -185,11 +186,11 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify(emailData),
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to send status email');
       }
-  
+
       toast.success(`Status updated to ${newStatus} and email sent`);
     } catch (error) {
       console.error('Status update error:', error);
@@ -298,22 +299,36 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto py-6">
       <Card>
-      
+
         <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Registration Management</CardTitle>
-          
+
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
             {/* Stats */}
             <div className="flex justify-between sm:flex-col sm:items-center">
-              <div className="flex flex-col items-center">
-                <span className="text-sm text-muted-foreground">Total Registrations</span>
-                <span className="text-2xl font-bold">{registrations.length}</span>
-              </div>
-              <div className="flex flex-col items-center ml-4 sm:ml-0 sm:mt-2">
-                <span className="text-sm text-muted-foreground">Coders Arrived</span>
-                <span className="text-2xl font-bold">
-                  {registrations.filter((reg) => reg.arrived === "yes").length}
-                </span>
+              <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-2xl font-bold">{registrations.length}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Approved</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {registrations.filter((reg) => reg.status === "approved").length}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Rejected</span>
+                  <span className="text-2xl font-bold text-red-600">
+                    {registrations.filter((reg) => reg.status === "rejected").length}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Arrived</span>
+                  <span className="text-2xl font-bold">
+                    {registrations.filter((reg) => reg.arrived === "yes").length}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -400,13 +415,18 @@ export default function AdminDashboard() {
                           defaultValue={registration.status}
                           onValueChange={(value) => handleStatusChange(registration.id, value)}
                         >
-                          <SelectTrigger className="w-[130px]">
+                          <SelectTrigger 
+                            className={cn("w-[130px]", {
+                              "text-green-600": registration.status === "approved",
+                              "text-red-600": registration.status === "rejected"
+                            })}
+                          >
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="approved" className="text-green-600">Approved</SelectItem>
+                            <SelectItem value="rejected" className="text-red-600">Rejected</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -741,39 +761,47 @@ export default function AdminDashboard() {
 
       {/* Proof Document Dialog */}
       <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Payment Proof</DialogTitle>
-            <DialogDescription>
-              {selectedRegistration && <p>Transaction ID: {selectedRegistration.participationDetails.transactionID}</p>}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedRegistration && (
-            <div className="flex flex-col items-center justify-center max-h-[70vh] overflow-y-auto">
-              <img
-                src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
-                alt="Payment Proof"
-                className="w-full h-auto max-h-[500px] object-contain border rounded-md mt-7"
-              />
-              {selectedRegistration.participationDetails.isCsiMember === "yes" &&
-                selectedRegistration.documents.csiProof && (
-                  <div className="mt-4 w-full">
-                    <h3 className="text-lg font-semibold mb-2">CSI Membership Proof</h3>
-                    <img
-                      src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
-                      alt="CSI Membership Proof"
-                      className="w-full h-auto max-h-[500px] object-contain border rounded-md"
-                    />
-                  </div>
-                )}
-            </div>
-          )}
-          <DialogFooter>
+  <DialogContent className="max-w-2xl max-h-[85vh] mt-7 overflow-y-auto">
+    <DialogHeader className="sticky top-0 bg-background z-50 pb-4 mb-4 border-b">
+      <DialogTitle className="text-xl font-semibold">Payment Proof</DialogTitle>
+      <DialogDescription>
+        {selectedRegistration && (
+          <p>Transaction ID: {selectedRegistration.participationDetails.transactionID}</p>
+        )}
+      </DialogDescription>
+    </DialogHeader>
+    
+    <div className="py-4">
+      {selectedRegistration && (
+        <div className="flex flex-col items-center justify-center gap-6">
+          <div className="w-full">
+            <img
+              src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
+              alt="Payment Proof"
+              className="w-full h-auto max-h-[500px] object-contain border rounded-md"
+            />
+          </div>
+          
+          {selectedRegistration.participationDetails.isCsiMember === "yes" &&
+            selectedRegistration.documents.csiProof && (
+              <div className="w-full">
+                <h3 className="text-lg font-semibold mb-2">CSI Membership Proof</h3>
+                <img
+                  src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
+                  alt="CSI Membership Proof"
+                  className="w-full h-auto max-h-[500px] object-contain border rounded-md"
+                />
+              </div>
+            )}
+        </div>
+      )}
+    </div>
+
+    <DialogFooter>
             <Button onClick={() => setIsProofDialogOpen(false)}>Close</Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+  </DialogContent>
+</Dialog>
       <Toaster />
     </div>
   )
