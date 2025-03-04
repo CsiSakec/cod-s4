@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, AlertCircle, School, User, CreditCard, Sun, Moon } from "lucide-react"
+import { CheckCircle2, AlertCircle, School, User, CreditCard } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { database } from "@/firebaseConfig"
@@ -38,6 +38,14 @@ function SuccessModal({
             Thank you for registering! Your registration has been submitted successfully.
           </p>
           <p className="text-sm text-muted-foreground">You will receive a confirmation email shortly.</p>
+          <a
+            href="https://chat.whatsapp.com/JVIRx7jbgVS8LWwEXZAjGK"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full"
+          >
+            <Button className="w-full bg-green-600 hover:bg-green-700 mb-2">Join WhatsApp Group</Button>
+          </a>
           <Button onClick={onClose} className="w-full">
             Close
           </Button>
@@ -48,7 +56,68 @@ function SuccessModal({
 }
 
 // Modified schema to include new fields for education type
-const formSchema = z.object({
+interface ParticipantType {
+  inter: 'inter'
+  intra: 'intra'
+}
+
+interface EducationType {
+  diploma: 'diploma'
+  bachelors: 'bachelors'
+}
+
+interface FormValues {
+  isFromSakec: 'yes' | 'no'
+  educationType?: keyof EducationType
+  participantType?: Array<keyof ParticipantType>
+  name: string
+  year: string
+  branch: string
+  otherBranch?: string
+  email: string
+  phone: string
+  prn?: string
+  college: string
+  isCsiMember?: 'yes' | 'no'
+  rounds?: string[]
+  transactionID: string
+  paymentProof?: File
+  csiProof?: File
+}
+
+// Define interfaces for validation schema
+interface ParticipantType {
+  inter: 'inter'
+  intra: 'intra'
+}
+
+interface EducationType {
+  diploma: 'diploma'
+  bachelors: 'bachelors'
+}
+
+interface FormValues {
+  isFromSakec: 'yes' | 'no'
+  educationType?: keyof EducationType
+  participantType?: Array<keyof ParticipantType>
+  name: string
+  year: string
+  branch: string
+  otherBranch?: string
+  email: string
+  phone: string
+  prn?: string
+  college: string
+  isCsiMember?: 'yes' | 'no'
+  rounds?: string[]
+  transactionID: string
+  paymentProof?: File
+  csiProof?: File
+}
+
+
+
+const formSchema: z.ZodType<FormValues> = z.object({
   isFromSakec: z.enum(["yes", "no"]),
   educationType: z.enum(["diploma", "bachelors"]).optional(),
   participantType: z.array(z.enum(["inter", "intra"])).optional(),
@@ -65,21 +134,37 @@ const formSchema = z.object({
   prn: z
     .string()
     .optional()
-    .refine((val) => !val || /^[a-zA-Z0-9]{1,14}$/.test(val), {
+    .refine((val: string | undefined) => !val || /^[a-zA-Z0-9]{1,14}$/.test(val), {
       message: "PRN must be alphanumeric and up to 14 characters if provided",
     }),
   college: z.string().min(2, { message: "College name must be at least 2 characters." }),
   isCsiMember: z.enum(["yes", "no"]).optional(),
-  rounds: z.array(z.string()).refine(
-    (rounds) => {
-      // Create a custom validation function that only takes rounds as parameter
-      const data = rounds as string[];
-      return data.length > 0;
-    },
-    {
-      message: "Please select at least one round for inter-college participation"
-    }
-  ).optional(),
+  rounds: z.array(z.string())
+    .optional()
+    .refine(
+      (rounds) => {
+        return true; // Initial validation always passes
+      }
+    )
+    .superRefine((rounds, ctx) => {
+      const participantType = ctx.path[0] as unknown as string[];
+
+      if (participantType && participantType.length === 1 && participantType.includes("intra")) {
+        return true;
+      }
+
+      if (participantType && participantType.includes("inter")) {
+        if (!rounds || rounds.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please select at least one round for inter-college participation",
+          });
+          return false;
+        }
+      }
+
+      return true;
+    }),
   transactionID: z.string().min(2, { message: "Please enter it" }),
   paymentProof: z.any().optional(),
   csiProof: z.any().optional(),
@@ -96,7 +181,6 @@ export default function RegistrationForm() {
   const [totalPrice, setTotalPrice] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -151,12 +235,12 @@ export default function RegistrationForm() {
 
       // Handle CSI proof file if exists
       let csiBase64 = null
-      if (values.csiProof) {
+      if (values.csiProof instanceof File) {
         const csiReader = new FileReader()
         csiBase64 = await new Promise((resolve, reject) => {
           csiReader.onload = () => resolve(csiReader.result)
           csiReader.onerror = reject
-          csiReader.readAsDataURL(values.csiProof)
+          csiReader.readAsDataURL(values.csiProof as File)
         })
       }
 
@@ -201,85 +285,103 @@ export default function RegistrationForm() {
           subject: "CSI-SAKEC COD4 Registration Confirmation",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h1 style="color: #1a73e8; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
-                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                  Dear ${values.name},
-                </p>
-                <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                  Thank you for registering for CSI-SAKEC CALL OF DUTY - SEASON 4! Your registration has been successfully received.
-                </p>
-                
-                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                  <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
-                    <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
-                    <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
-                    <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
-                    <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
-                    <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
-                    <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
-                    <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
-                    <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
-                  </ul>
-                </div>
+  <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+    <h1 style="color: #1a73e8; text-align: center; margin-bottom: 20px;">Registration Successful!</h1>
+    <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+      Dear ${values.name},
+    </p>
+    <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
+      Thank you for registering for CSI-SAKEC CALL OF DUTY - SEASON 4! Your registration has been successfully received.
+    </p>
+    
+    <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
+        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
+        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
+        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
+        <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
+        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
+        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
+        <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
+        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
+      </ul>
+    </div>
 
-                <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                  <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
-                  </ul>
-                </div>
+    <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
+      <ul style="margin: 0; padding-left: 20px;">
+        ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
+      </ul>
+    </div>
 
-                <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
-                  <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
-                  and updates about the event on this email address.
-                </p>
+    ${values.participantType?.includes("intra") ? `
+    <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h3 style="color: #155724; font-size: 16px; margin-bottom: 10px;">Intra-College Participation</h3>
+      <p style="font-size: 14px; color: #155724;">You have  registered as an <strong>Intra-College</strong> participant.</p>
+    </div>` : ''}
 
-                <div style="margin-top: 30px; text-align: center; color: #5f6368; font-size: 14px;">
-                  <p>Best regards,<br>CSI-SAKEC Team</p>
-                </div>
-              </div>
-            </div>
-          `
-        };
+    <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Join the WhatsApp Group:</h3>
+      <p style="font-size: 14px; margin-bottom: 10px;">Stay updated with event details and announcements:</p>
+      <p style="text-align: center;">
+        <a href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH" target="_blank" 
+           style="display: inline-block; padding: 10px 15px; background-color: #25d366; 
+                  color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          Join WhatsApp Group
+        </a>
+      </p>
+    </div>
 
-        await fetch('/api/registeremail', {
-          method: 'POST',
+    <p style="font-size: 14px; color: #5f6368; margin-top: 20px;">
+      <strong>Note:</strong> Please keep this email for future reference. You'll receive further instructions
+      and updates about the event on this email address.
+    </p>
+
+    <div style="margin-top: 30px; text-align: center; color: #5f6368; font-size: 14px;">
+      <p>Best regards,<br>CSI-SAKEC Team</p>
+    </div>
+  </div>
+</div>
+
+
+          `,
+        }
+
+        await fetch("/api/registeremail", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(emailData),
-        });
+        })
 
         // Show success message and reset form
-        toast.success("Registration successful! Check your email for confirmation.");
-        setShowSuccessModal(true);
-        form.reset();
-        setStep(1);
+        toast.success("Registration successful! Check your email for confirmation.")
+        setShowSuccessModal(true)
+        form.reset()
+        setStep(1)
 
         // Reset all state
-        setParticipantTypes([]);
-        setSelectedRounds([]);
-        setIsFromSakec(null);
-        setEducationType(null);
-        setIsCsiMember(null);
-        setYear(null);
-        setTotalPrice(0);
-
+        setParticipantTypes([])
+        setSelectedRounds([])
+        setIsFromSakec(null)
+        setEducationType(null)
+        setIsCsiMember(null)
+        setYear(null)
+        setTotalPrice(0)
       } catch (emailError) {
-        console.error("Failed to send confirmation email:", emailError);
-        toast.error("Registration successful but failed to send confirmation email.");
+        console.error("Failed to send confirmation email:", emailError)
+        toast.error("Registration successful but failed to send confirmation email.")
       }
-
     } catch (error) {
-      console.error("Registration error:", error);
-      toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.");
+      console.error("Registration error:", error)
+      toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const nextStep = async () => {
     setIsLoading(true)
@@ -326,16 +428,12 @@ export default function RegistrationForm() {
           return
         }
 
-        // Validate round selection for inter-college participants
-        if (participantTypes.includes("inter")) {
-          if (selectedRounds.length === 0) {
-            toast.error("Please select at least one round for inter-college participation")
-            return
-          }
-        }
-
-        // If only inter is selected (no intra), enforce round selection
-        if (participantTypes.includes("inter") && !participantTypes.includes("intra") && selectedRounds.length === 0) {
+        // Only validate round selection if inter-college is selected AND it's not a SAKEC student with only intra selected
+        if (
+          participantTypes.includes("inter") &&
+          !(isFromSakec === "yes" && participantTypes.length === 1 && participantTypes.includes("intra")) &&
+          selectedRounds.length === 0
+        ) {
           toast.error("Please select at least one round for inter-college participation")
           return
         }
@@ -422,33 +520,33 @@ export default function RegistrationForm() {
   }
 
   const calculateTotalPrice = () => {
-    let totalCost = 0;
-    const isCSIMember = isCsiMember === "yes";
-  
+    let totalCost = 0
+    const isCSIMember = isCsiMember === "yes"
+
     // Calculate intra-college cost immediately when selected
     if (participantTypes.includes("intra")) {
-      const intraPrice = isCSIMember ? 30 : 50;
-      totalCost += intraPrice;
+      const intraPrice = isCSIMember ? 30 : 50
+      totalCost += intraPrice
     }
-  
+
     // Calculate inter-college cost only if rounds are selected
     if (participantTypes.includes("inter")) {
       if (selectedRounds.length > 0) {
-        const pricePerRound = isFromSakec === "yes" && isCSIMember ? 100 : 150;
-        totalCost += selectedRounds.length * pricePerRound;
+        const pricePerRound = isFromSakec === "yes" && isCSIMember ? 100 : 150
+        totalCost += selectedRounds.length * pricePerRound
       } else {
         // If inter is selected but no rounds are chosen, only show intra cost if applicable
-        totalCost = participantTypes.includes("intra") ? totalCost : 0;
+        totalCost = participantTypes.includes("intra") ? totalCost : 0
       }
     }
-  
-    setTotalPrice(totalCost);
-  };
-  
+
+    setTotalPrice(totalCost)
+  }
+
   // Update useEffect to recalculate price when participant types change
   useEffect(() => {
-    calculateTotalPrice();
-  }, [participantTypes, isCsiMember, selectedRounds, isFromSakec]);
+    calculateTotalPrice()
+  }, [participantTypes, isCsiMember, selectedRounds, isFromSakec, calculateTotalPrice]) //Corrected useEffect dependencies
 
   const handleRoundSelection = (round: string) => {
     setSelectedRounds((prev) => {
@@ -501,8 +599,6 @@ export default function RegistrationForm() {
   return (
     <div className={`min-h-screen`}>
       <div className="p-4 md:p-8 bg-background  min-h-screen">
-
-
         <Card className="w-full shadow-lg bg-card ">
           <CardContent className="p-6">
             <div className="flex justify-between mb-6">
@@ -513,9 +609,7 @@ export default function RegistrationForm() {
                     }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${step >= stepNumber
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${step >= stepNumber ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                       }`}
                   >
                     {stepNumber}
@@ -898,106 +992,104 @@ export default function RegistrationForm() {
                       </div>
                     )}
 
-                    {/* Show inter-college section if inter is selected */}
-                    {participantTypes.includes("inter") && (
-                      <div className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="rounds"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>Select Inter-College Round(s) 🔄</FormLabel>
-                              <div className="space-y-3">
-                                {getAvailableRounds().includes("Rookie(round1)") && (
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="round1"
-                                      checked={selectedRounds.includes("Rookie(round1)")}
-                                      onCheckedChange={() => handleRoundSelection("Rookie(round1)")}
-                                    />
-                                    <label
-                                      htmlFor="round1"
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      Rookie (Round 1)
-                                    </label>
-                                  </div>
-                                )}
-                                {getAvailableRounds().includes("Advanced(round2)") && (
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="round2"
-                                      checked={selectedRounds.includes("Advanced(round2)")}
-                                      onCheckedChange={() => handleRoundSelection("Advanced(round2)")}
-                                    />
-                                    <label
-                                      htmlFor="round2"
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      Advanced (Round 2)
-                                    </label>
-                                  </div>
-                                )}
-                                {getAvailableRounds().includes("Open(round3)") && (
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="round3"
-                                      checked={selectedRounds.includes("Open(round3)")}
-                                      onCheckedChange={() => handleRoundSelection("Open(round3)")}
-                                    />
-                                    <label
-                                      htmlFor="round3"
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      Open (Round 3)
-                                    </label>
-                                  </div>
-                                )}
+                    {/* Show inter-college section if inter is selected AND it's not a SAKEC student with only intra selected */}
+                    {participantTypes.includes("inter") &&
+                      !(
+                        isFromSakec === "yes" &&
+                        participantTypes.length === 1 &&
+                        participantTypes.includes("intra")
+                      ) && (
+                        <div className="space-y-6">
+                          <FormField
+                            control={form.control}
+                            name="rounds"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel>Select Inter-College Round(s) 🔄</FormLabel>
+                                <div className="space-y-3">
+                                  {getAvailableRounds().includes("Rookie(round1)") && (
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="round1"
+                                        checked={selectedRounds.includes("Rookie(round1)")}
+                                        onCheckedChange={() => handleRoundSelection("Rookie(round1)")}
+                                      />
+                                      <label
+                                        htmlFor="round1"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        Rookie (Round 1)
+                                      </label>
+                                    </div>
+                                  )}
+                                  {getAvailableRounds().includes("Advanced(round2)") && (
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="round2"
+                                        checked={selectedRounds.includes("Advanced(round2)")}
+                                        onCheckedChange={() => handleRoundSelection("Advanced(round2)")}
+                                      />
+                                      <label
+                                        htmlFor="round2"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        Advanced (Round 2)
+                                      </label>
+                                    </div>
+                                  )}
+                                  {getAvailableRounds().includes("Open(round3)") && (
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="round3"
+                                        checked={selectedRounds.includes("Open(round3)")}
+                                        onCheckedChange={() => handleRoundSelection("Open(round3)")}
+                                      />
+                                      <label
+                                        htmlFor="round3"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        Open (Round 3)
+                                      </label>
+                                    </div>
+                                  )}
+                                </div>
+                                <FormDescription>
+                                  {isFromSakec === "yes"
+                                    ? year === "FE" || year === "SE"
+                                      ? "First and Second year students can choose any of the rounds"
+                                      : "Third and Final year students can choose from rounds 2 or 3 only"
+                                    : educationType === "bachelors" && (year === "TE" || year === "BE")
+                                      ? "Third and Final year bachelor's students can choose from rounds 2 or 4 only"
+                                      : "You can choose from the available rounds"}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                              </div>
-                              <FormDescription>
-                                {isFromSakec === "yes"
-                                  ? year === "FE" || year === "SE"
-                                    ? "First and Second year students can choose any of the rounds"
-                                    : "Third and Final year students can choose from rounds 2 or 3 only"
-                                  : educationType === "bachelors" && (year === "TE" || year === "BE")
-                                    ? "Third and Final year bachelor's students can choose from rounds 2 or 4 only"
-                                    : "You can choose from the available rounds"}
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="mt-4 p-4 bg-blue-50  rounded-md border border-blue-200 ">
-                          <h3 className="font-semibold text-blue-800  mb-2">
-                            Inter-College Price Calculation
-                          </h3>
-                          <p className="text-blue-700  mb-2">
-                            <span className="font-medium">Price per round:</span> ₹
-                            {isFromSakec === "yes" && isCsiMember === "yes" ? "100" : "150"}
-                            <span className="text-sm ml-2">
-                              {isFromSakec === "yes" && isCsiMember === "yes"
-                                ? "(CSI Member Price)"
-                                : "(Standard Price)"}
-                            </span>
-                          </p>
-                          <p className="text-blue-700  mb-2">
-                            <span className="font-medium">Selected rounds:</span> {selectedRounds.length}
-                          </p>
+                          <div className="mt-4 p-4 bg-blue-50  rounded-md border border-blue-200 ">
+                            <h3 className="font-semibold text-blue-800  mb-2">Inter-College Price Calculation</h3>
+                            <p className="text-blue-700  mb-2">
+                              <span className="font-medium">Price per round:</span> ₹
+                              {isFromSakec === "yes" && isCsiMember === "yes" ? "100" : "150"}
+                              <span className="text-sm ml-2">
+                                {isFromSakec === "yes" && isCsiMember === "yes"
+                                  ? "(CSI Member Price)"
+                                  : "(Standard Price)"}
+                              </span>
+                            </p>
+                            <p className="text-blue-700  mb-2">
+                              <span className="font-medium">Selected rounds:</span> {selectedRounds.length}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Show total price calculation if any participant type is selected */}
                     {(participantTypes.includes("inter") || participantTypes.includes("intra")) && (
                       <div className="mt-4 p-4 bg-purple-50  rounded-md border border-purple-200 ">
-                        <h3 className="font-semibold text-purple-800  mb-2">
-                          Total Registration Cost
-                        </h3>
-                        <p className="text-lg font-bold text-purple-800 ">
-                          Total Amount: ₹{totalPrice}
-                        </p>
+                        <h3 className="font-semibold text-purple-800  mb-2">Total Registration Cost</h3>
+                        <p className="text-lg font-bold text-purple-800 ">Total Amount: ₹{totalPrice}</p>
                       </div>
                     )}
 
@@ -1134,3 +1226,4 @@ export default function RegistrationForm() {
     </div>
   )
 }
+

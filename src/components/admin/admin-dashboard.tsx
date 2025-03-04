@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { database } from "@/firebaseConfig"
-import { ref, onValue, update, remove, DatabaseReference, get } from "firebase/database"
+import { ref, onValue, update, remove, get } from "firebase/database"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -20,10 +20,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Toaster, toast } from "sonner"
-import { LogOut, FileDown, MoreVertical, Edit, Trash2, Eye, Search, X } from "lucide-react"
+import { LogOut, FileDown, MoreVertical, Edit, Trash2, Eye, Search, X } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
-// Type definition for registration data
+// Update the Registration interface to match the new schema
 interface Registration {
   id: string
   personalInfo: {
@@ -34,12 +34,13 @@ interface Registration {
     year: string
     branch: string
     prn: string | null
+    educationType?: "diploma" | "bachelors" | null
   }
   participationDetails: {
     isFromSakec: "yes" | "no"
     participantTypes: string[]
-    isCsiMember: "yes" | "no"
-    selectedRounds: string[]
+    isCsiMember: "yes" | "no" | null
+    selectedRounds?: string[]
     totalPrice: number
     transactionID: string
   }
@@ -75,6 +76,7 @@ export default function AdminDashboard() {
     }
   }, [router])
 
+  // Update the fetchRegistrations function to handle the new structure
   const fetchRegistrations = () => {
     setIsLoading(true)
     const registrationsRef = ref(database, "registrations")
@@ -109,25 +111,28 @@ export default function AdminDashboard() {
     }
   }, [searchTerm, registrations])
 
+  // Update the handleStatusChange function to include the new email template
   const handleStatusChange = async (participantId: string, newStatus: string) => {
     try {
-      const participantRef = ref(database, `registrations/${participantId}`);
-      await update(participantRef, { status: newStatus });
+      const participantRef = ref(database, `registrations/${participantId}`)
+      await update(participantRef, { status: newStatus })
 
       // Get participant data
-      const participantSnapshot = await get(participantRef);
-      const participant = participantSnapshot.val();
+      const participantSnapshot = await get(participantRef)
+      const participant = participantSnapshot.val()
 
-      if (newStatus === 'pending') {
-        toast.success(`Status updated to ${newStatus}`);
-        return; // Exit early without sending an email
+      if (newStatus === "pending") {
+        toast.success(`Status updated to ${newStatus}`)
+        return // Exit early without sending an email
       }
 
       // Prepare email data based on status
       const emailData = {
         to: participant.personalInfo.email,
         subject: `CSI-COD Registration ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
-        html: newStatus === 'approved' ? `
+        html:
+          newStatus === "approved"
+            ? `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
               <h1 style="color: #28a745; text-align: center; margin-bottom: 20px;">Registration Approved!</h1>
@@ -150,7 +155,8 @@ export default function AdminDashboard() {
               </p>
             </div>
           </div>
-        ` : `
+        `
+            : `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
               <h1 style="color: #dc3545; text-align: center; margin-bottom: 20px;">Registration Status Update</h1>
@@ -175,28 +181,28 @@ export default function AdminDashboard() {
               </p>
             </div>
           </div>
-        `
-      };
-
-      // Send status email
-      const response = await fetch('/api/registeremail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send status email');
+        `,
       }
 
-      toast.success(`Status updated to ${newStatus} and email sent`);
+      // Send status email
+      const response = await fetch("/api/registeremail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send status email")
+      }
+
+      toast.success(`Status updated to ${newStatus} and email sent`)
     } catch (error) {
-      console.error('Status update error:', error);
-      toast.error('Failed to update status or send email');
+      console.error("Status update error:", error)
+      toast.error("Failed to update status or send email")
     }
-  };
+  }
 
   const handleArrivedChange = async (id: string, arrived: string) => {
     try {
@@ -240,8 +246,8 @@ export default function AdminDashboard() {
     router.push("/admin")
   }
 
+  // Update the exportToCSV function to include new fields
   const exportToCSV = () => {
-    // Create CSV header
     const headers = [
       "ID",
       "Name",
@@ -251,6 +257,7 @@ export default function AdminDashboard() {
       "Year",
       "Branch",
       "PRN",
+      "Education Type",
       "SAKEC Student",
       "Participant Type",
       "CSI Member",
@@ -261,7 +268,6 @@ export default function AdminDashboard() {
       "Created At",
     ]
 
-    // Create CSV rows
     const csvRows = filteredRegistrations.map((reg) => [
       reg.id,
       reg.personalInfo.name,
@@ -271,20 +277,19 @@ export default function AdminDashboard() {
       reg.personalInfo.year,
       reg.personalInfo.branch,
       reg.personalInfo.prn || "N/A",
+      reg.personalInfo.educationType || "N/A",
       reg.participationDetails.isFromSakec,
       reg.participationDetails.participantTypes.join(", "),
-      reg.participationDetails.isCsiMember,
-      reg.participationDetails.selectedRounds.join(", "),
+      reg.participationDetails.isCsiMember || "N/A",
+      reg.participationDetails.selectedRounds?.join(", "),
       reg.participationDetails.totalPrice,
       reg.status,
       reg.arrived || "no",
       reg.createdAt,
     ])
 
-    // Combine header and rows
     const csvContent = [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n")
 
-    // Create a blob and download link
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -296,10 +301,10 @@ export default function AdminDashboard() {
     document.body.removeChild(link)
   }
 
+  // Update the render method to include new fields in the table and dialogs
   return (
     <div className="container mx-auto py-6">
       <Card>
-
         <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Registration Management</CardTitle>
 
@@ -382,6 +387,7 @@ export default function AdminDashboard() {
                     <TableHead>Phone</TableHead>
                     <TableHead>Year</TableHead>
                     <TableHead>PRN</TableHead>
+                    <TableHead>Education Type</TableHead>
                     <TableHead>Transaction ID</TableHead>
                     <TableHead>Proof</TableHead>
                     <TableHead>Status</TableHead>
@@ -397,6 +403,7 @@ export default function AdminDashboard() {
                       <TableCell>{registration.personalInfo.phone}</TableCell>
                       <TableCell>{registration.personalInfo.year}</TableCell>
                       <TableCell>{registration.personalInfo.prn || "N/A"}</TableCell>
+                      <TableCell>{registration.personalInfo.educationType || "N/A"}</TableCell>
                       <TableCell>{registration.participationDetails.transactionID}</TableCell>
                       <TableCell>
                         <Button
@@ -415,18 +422,22 @@ export default function AdminDashboard() {
                           defaultValue={registration.status}
                           onValueChange={(value) => handleStatusChange(registration.id, value)}
                         >
-                          <SelectTrigger 
+                          <SelectTrigger
                             className={cn("w-[130px]", {
                               "text-green-600": registration.status === "approved",
-                              "text-red-600": registration.status === "rejected"
+                              "text-red-600": registration.status === "rejected",
                             })}
                           >
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved" className="text-green-600">Approved</SelectItem>
-                            <SelectItem value="rejected" className="text-red-600">Rejected</SelectItem>
+                            <SelectItem value="approved" className="text-green-600">
+                              Approved
+                            </SelectItem>
+                            <SelectItem value="rejected" className="text-red-600">
+                              Rejected
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -492,9 +503,9 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* View Registration Dialog */}
+      {/* Update View Registration Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto mt-7">
           <DialogHeader>
             <DialogTitle>Registration Details</DialogTitle>
           </DialogHeader>
@@ -527,6 +538,12 @@ export default function AdminDashboard() {
                         <span className="font-medium">PRN:</span> {selectedRegistration.personalInfo.prn}
                       </p>
                     )}
+                    {selectedRegistration.personalInfo.educationType && (
+                      <p>
+                        <span className="font-medium">Education Type:</span>{" "}
+                        {selectedRegistration.personalInfo.educationType}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -536,19 +553,24 @@ export default function AdminDashboard() {
                       <span className="font-medium">SAKEC Student:</span>{" "}
                       {selectedRegistration.participationDetails.isFromSakec}
                     </p>
-                    <p>
+                    <p className="text-red-600">
                       <span className="font-medium">Participant Type:</span>{" "}
                       {selectedRegistration.participationDetails.participantTypes.join(", ")}
                     </p>
                     <p>
                       <span className="font-medium">CSI Member:</span>{" "}
-                      {selectedRegistration.participationDetails.isCsiMember}
+                      {selectedRegistration.participationDetails.isCsiMember || "N/A"}
                     </p>
                     <p>
                       <span className="font-medium">Selected Rounds:</span>{" "}
-                      {selectedRegistration.participationDetails.selectedRounds.length > 0
-                        ? selectedRegistration.participationDetails.selectedRounds.join(", ")
-                        : "None"}
+                      {selectedRegistration?.participationDetails?.isFromSakec &&
+  (Array.isArray(selectedRegistration.participationDetails.selectedRounds) &&
+  selectedRegistration.participationDetails.selectedRounds.length > 0
+    ? selectedRegistration.participationDetails.selectedRounds.join(", ")
+    : "None")}
+
+
+
                     </p>
                     <p>
                       <span className="font-medium">Total Price:</span> ₹
@@ -608,7 +630,7 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Registration Dialog */}
+      {/* Update Edit Registration Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -682,6 +704,31 @@ export default function AdminDashboard() {
                       })
                     }
                   />
+                </div>
+              )}
+              {selectedRegistration.personalInfo.educationType && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-education-type">Education Type</Label>
+                  <Select
+                    value={selectedRegistration.personalInfo.educationType}
+                    onValueChange={(value: string) =>
+                      setSelectedRegistration({
+                        ...selectedRegistration,
+                        personalInfo: {
+                          ...selectedRegistration.personalInfo,
+                          educationType: value as "diploma" | "bachelors" | null,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger id="edit-education-type">
+                      <SelectValue placeholder="Select education type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diploma">Diploma</SelectItem>
+                      <SelectItem value="bachelors">Bachelors</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
               <div className="space-y-2">
@@ -761,50 +808,46 @@ export default function AdminDashboard() {
 
       {/* Proof Document Dialog */}
       <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
-  <DialogContent className="max-w-2xl max-h-[85vh] mt-7 overflow-y-auto">
-    <DialogHeader className="sticky top-0 bg-background z-50 pb-4 mb-4 border-b">
-      <DialogTitle className="text-xl font-semibold">Payment Proof</DialogTitle>
-      <DialogDescription>
-        {selectedRegistration && (
-          <p>Transaction ID: {selectedRegistration.participationDetails.transactionID}</p>
-        )}
-      </DialogDescription>
-    </DialogHeader>
-    
-    <div className="py-4">
-      {selectedRegistration && (
-        <div className="flex flex-col items-center justify-center gap-6">
-          <div className="w-full">
-            <img
-              src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
-              alt="Payment Proof"
-              className="w-full h-auto max-h-[500px] object-contain border rounded-md"
-            />
-          </div>
-          
-          {selectedRegistration.participationDetails.isCsiMember === "yes" &&
-            selectedRegistration.documents.csiProof && (
-              <div className="w-full">
-                <h3 className="text-lg font-semibold mb-2">CSI Membership Proof</h3>
-                <img
-                  src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
-                  alt="CSI Membership Proof"
-                  className="w-full h-auto max-h-[500px] object-contain border rounded-md"
-                />
+        <DialogContent className="max-w-2xl max-h-[85vh] mt-7 overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background z-50 pb-4 mb-4 border-b">
+            <DialogTitle className="text-xl font-semibold">Payment Proof</DialogTitle>
+            <DialogDescription>
+              {selectedRegistration && <p>Transaction ID: {selectedRegistration.participationDetails.transactionID}</p>}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {selectedRegistration && (
+              <div className="flex flex-col items-center justify-center gap-6">
+                <div className="w-full">
+                  <img
+                    src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
+                    alt="Payment Proof"
+                    className="w-full h-auto max-h-[500px] object-contain border rounded-md"
+                  />
+                </div>
+
+                {selectedRegistration.participationDetails.isCsiMember === "yes" &&
+                  selectedRegistration.documents.csiProof && (
+                    <div className="w-full">
+                      <h3 className="text-lg font-semibold mb-2">CSI Membership Proof</h3>
+                      <img
+                        src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
+                        alt="CSI Membership Proof"
+                        className="w-full h-auto max-h-[500px] object-contain border rounded-md"
+                      />
+                    </div>
+                  )}
               </div>
             )}
-        </div>
-      )}
-    </div>
+          </div>
 
-    <DialogFooter>
+          <DialogFooter>
             <Button onClick={() => setIsProofDialogOpen(false)}>Close</Button>
           </DialogFooter>
-  </DialogContent>
-</Dialog>
+        </DialogContent>
+      </Dialog>
       <Toaster />
     </div>
   )
 }
-
-

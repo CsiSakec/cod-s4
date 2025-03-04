@@ -6,9 +6,21 @@ export default function DescriptionSection() {
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Image (Appears Above Text on Small Screens) */}
+          <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[400px] rounded-lg overflow-hidden shadow-xl">
+            <Image
+              src="/banner.png"
+              alt="Code off Duty - Season 4"
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </div>
+
           {/* Description */}
-          <div className="space-y-6">
+          <div className="space-y-6 text-center lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight text-black">
               CODE OFF DUTY - SEASON 4 🧑‍💻
             </h2>
@@ -27,8 +39,8 @@ export default function DescriptionSection() {
               push your limits, and emerge victorious!
             </p>
 
-            <div className="pt-4">
-              <div className="relative inline-flex items-center justify-center gap-4 group">
+            {/* Buttons (Stacked on Small Screens, Side-by-Side on Larger Screens) */}
+            <div className="relative inline-flex items-center justify-center gap-4 group">
                 <div className="absolute inset-0 duration-1000 opacity-60 transitiona-all bg-gradient-to-r from-indigo-500 via-pink-500 to-yellow-400 rounded-xl blur-lg filter group-hover:opacity-100 group-hover:duration-200"></div>
                 <a
                   role="button"
@@ -36,7 +48,7 @@ export default function DescriptionSection() {
                   title="payment"
                   href="/registration"
                 >
-                  Register Now
+                  Register Now!
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 10 10"
@@ -61,24 +73,26 @@ export default function DescriptionSection() {
                   title="payment"
                   href="/rulesandregulation"
                 >
-                  Rules & Regulations
-
-
+                  Rules & Regulation's
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 10 10"
+                    height="10"
+                    width="10"
+                    fill="none"
+                    className="mt-0.5 ml-2 -mr-1 stroke-white stroke-2"
+                  >
+                    <path
+                      d="M0 5h7"
+                      className="transition opacity-0 group-hover:opacity-100"
+                    ></path>
+                    <path
+                      d="M1 1l4 4-4 4"
+                      className="transition group-hover:translate-x-[3px]"
+                    ></path>
+                  </svg>
                 </a>
               </div>
-            </div>
-          </div>
-
-          {/* Image */}
-          <div className="relative aspect-[16/9] md:h-[400px] rounded-lg overflow-hidden shadow-xl">
-            <Image
-              src="/banner.png"
-              alt="Code off Duty - Season 4"
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
           </div>
         </div>
       </div>
