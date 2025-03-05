@@ -39,7 +39,7 @@ function SuccessModal({
           </p>
           <p className="text-sm text-muted-foreground">You will receive a confirmation email shortly.</p>
           <a
-            href="https://chat.whatsapp.com/JVIRx7jbgVS8LWwEXZAjGK"
+            href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH"
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full"
