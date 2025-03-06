@@ -84,7 +84,7 @@ const teamData = {
     ],
   },
   designTeam: {
-    title: "Designer Team",
+    title: "Design Team",
     subtitle: "The creative artists behind our visual identity",
     members: [
       { name: "AACHAL BAFNA", role: "HEAD", year: "TE", imageSrc: "/team/aachal.webp" },
