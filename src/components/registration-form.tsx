@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { database } from "@/firebaseConfig"
 import { ref, set } from "firebase/database"
+import imageCompression from 'browser-image-compression';
 
 function SuccessModal({
   open,
@@ -115,8 +116,6 @@ interface FormValues {
   csiProof?: File
 }
 
-
-
 const formSchema: z.ZodType<FormValues> = z.object({
   isFromSakec: z.enum(["yes", "no"]),
   educationType: z.enum(["diploma", "bachelors"]).optional(),
@@ -169,6 +168,22 @@ const formSchema: z.ZodType<FormValues> = z.object({
   paymentProof: z.any().optional(),
   csiProof: z.any().optional(),
 })
+
+const compressImage = async (file: File) => {
+  const options = {
+    maxSizeMB: 1, // Max size in MB
+    maxWidthOrHeight: 1024, // Max width/height
+    useWebWorker: true,
+  };
+
+  try {
+    const compressedFile = await imageCompression(file, options);
+    return compressedFile;
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    throw error;
+  }
+};
 
 export default function RegistrationForm() {
   const [step, setStep] = useState(1)
@@ -223,25 +238,28 @@ export default function RegistrationForm() {
         throw new Error("CSI membership proof is required")
       }
 
-      // Handle payment proof file
-      const paymentFile = values.paymentProof
-      const paymentReader = new FileReader()
+      // Compress payment proof
+      let paymentBase64 = null;
+      if (values.paymentProof) {
+        const compressedPaymentProof = await compressImage(values.paymentProof);
+        const paymentReader = new FileReader();
+        paymentBase64 = await new Promise((resolve, reject) => {
+          paymentReader.onload = () => resolve(paymentReader.result);
+          paymentReader.onerror = reject;
+          paymentReader.readAsDataURL(compressedPaymentProof);
+        });
+      }
 
-      const paymentBase64 = await new Promise((resolve, reject) => {
-        paymentReader.onload = () => resolve(paymentReader.result)
-        paymentReader.onerror = reject
-        paymentReader.readAsDataURL(paymentFile)
-      })
-
-      // Handle CSI proof file if exists
-      let csiBase64 = null
+      // Compress CSI proof if exists
+      let csiBase64 = null;
       if (values.csiProof instanceof File) {
-        const csiReader = new FileReader()
+        const compressedCsiProof = await compressImage(values.csiProof);
+        const csiReader = new FileReader();
         csiBase64 = await new Promise((resolve, reject) => {
-          csiReader.onload = () => resolve(csiReader.result)
-          csiReader.onerror = reject
-          csiReader.readAsDataURL(values.csiProof as File)
-        })
+          csiReader.onload = () => resolve(csiReader.result);
+          csiReader.onerror = reject;
+          csiReader.readAsDataURL(compressedCsiProof);
+        });
       }
 
       // Create registration data object
@@ -1170,12 +1188,31 @@ export default function RegistrationForm() {
                             <FormControl>
                               <Input
                                 type="file"
-                                accept="image/*,.pdf"
-                                onChange={(e) => field.onChange(e.target.files?.[0])}
+                                accept="image/png,image/jpeg,image/jpg"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+
+                                  // Check file type
+                                  if (!file.type.startsWith('image/')) {
+                                    toast.error('Please upload only image files (PNG, JPG, JPEG)');
+                                    e.target.value = '';
+                                    return;
+                                  }
+
+                                  // Check file size (5MB limit before compression)
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    toast.error('File size should be less than 5MB');
+                                    e.target.value = '';
+                                    return;
+                                  }
+
+                                  field.onChange(file);
+                                }}
                                 className="cursor-pointer"
                               />
                             </FormControl>
-                            <FormDescription>Upload a screenshot or PDF of your payment confirmation</FormDescription>
+                            <FormDescription>Upload a screenshot of your payment confirmation (PNG, JPG only)</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1191,14 +1228,31 @@ export default function RegistrationForm() {
                               <FormControl>
                                 <Input
                                   type="file"
-                                  accept="image/*,.pdf"
-                                  onChange={(e) => field.onChange(e.target.files?.[0])}
+                                  accept="image/png,image/jpeg,image/jpg"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    // Check file type
+                                    if (!file.type.startsWith('image/')) {
+                                      toast.error('Please upload only image files (PNG, JPG, JPEG)');
+                                      e.target.value = '';
+                                      return;
+                                    }
+
+                                    // Check file size (5MB limit before compression)
+                                    if (file.size > 5 * 1024 * 1024) {
+                                      toast.error('File size should be less than 5MB');
+                                      e.target.value = '';
+                                      return;
+                                    }
+
+                                    field.onChange(file);
+                                  }}
                                   className="cursor-pointer"
                                 />
                               </FormControl>
-                              <FormDescription>
-                                Upload a screenshot or PDF of your CSI SAKEC membership card or receipt
-                              </FormDescription>
+                              <FormDescription>Upload a screenshot of your CSI SAKEC membership card (PNG, JPG only)</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
