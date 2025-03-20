@@ -36,19 +36,19 @@ export function Rules() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Registration Period</h3>
-                  <p className="text-muted-foreground">March 01 - March 20, 2025</p>
+                  <p className="text-muted-foreground">March 01 - March 26, 2025</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Rookie Round</h3>
-                  <p className="text-muted-foreground">March 21,2025 10:30am to 11:30am</p>
+                  <p className="text-muted-foreground">March 27,2025 10:30am to 11:30am</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Advanced Round</h3>
-                  <p className="text-muted-foreground">March 21,2025 12:00pm to 01:00pm</p>
+                  <p className="text-muted-foreground">March 27,2025 12:00pm to 01:00pm</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Open Round</h3>
-                  <p className="text-muted-foreground">March 21,2025 02:00pm to 03:00pm</p>
+                  <p className="text-muted-foreground">March 27,2025 02:00pm to 03:00pm</p>
                 </div>
               </div>
             </CardContent>

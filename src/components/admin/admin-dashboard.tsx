@@ -387,7 +387,8 @@ export default function AdminDashboard() {
                     <TableHead>Phone</TableHead>
                     <TableHead>Year</TableHead>
                     <TableHead>PRN</TableHead>
-                    <TableHead>Education Type</TableHead>
+                    <TableHead>Participant Type</TableHead>
+                    <TableHead>Selected Rounds</TableHead>
                     <TableHead>Transaction ID</TableHead>
                     <TableHead>Proof</TableHead>
                     <TableHead>Status</TableHead>
@@ -403,7 +404,12 @@ export default function AdminDashboard() {
                       <TableCell>{registration.personalInfo.phone}</TableCell>
                       <TableCell>{registration.personalInfo.year}</TableCell>
                       <TableCell>{registration.personalInfo.prn || "N/A"}</TableCell>
-                      <TableCell>{registration.personalInfo.educationType || "N/A"}</TableCell>
+                      <TableCell>{registration.participationDetails.participantTypes.join(", ")}</TableCell>
+                      <TableCell>
+                        {registration.participationDetails.selectedRounds && registration.participationDetails.selectedRounds.length > 0
+                          ? registration.participationDetails.selectedRounds.join(", ")
+                          : "N/A"}
+                      </TableCell>
                       <TableCell>{registration.participationDetails.transactionID}</TableCell>
                       <TableCell>
                         <Button
@@ -749,7 +755,7 @@ export default function AdminDashboard() {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
+                </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
