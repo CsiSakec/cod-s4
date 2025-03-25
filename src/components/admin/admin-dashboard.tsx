@@ -64,7 +64,21 @@ export default function AdminDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isProofDialogOpen, setIsProofDialogOpen] = useState(false)
   const router = useRouter()
-
+  const getParticipantTypeCounts = (registrations: Registration[]) => {
+    return {
+      rookie: registrations.filter(reg => 
+        reg.participationDetails.participantTypes.includes("inter") && 
+        reg.participationDetails.selectedRounds?.includes("Rookie(round1)")).length,
+      intermediate: registrations.filter(reg => 
+        reg.participationDetails.participantTypes.includes("inter") && 
+        reg.participationDetails.selectedRounds?.includes("Advanced(round2)")).length,
+      open: registrations.filter(reg => 
+        reg.participationDetails.participantTypes.includes("inter") && 
+        reg.participationDetails.selectedRounds?.includes("Open(round3)")).length,
+      intra: registrations.filter(reg => 
+        reg.participationDetails.participantTypes.includes("intra")).length
+    }
+  }
   // Check if admin is authenticated
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true"
@@ -145,7 +159,7 @@ export default function AdminDashboard() {
               <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <h3 style="color: #28a745; font-size: 16px; margin-bottom: 10px;">Next Steps:</h3>
                 <ul style="margin: 0; padding-left: 20px;">
-                  <li>Join our Discord server for further updates</li>
+                  <li>Join our Whatsapp group for further updates</li>
                   <li>Check your email regularly for event details</li>
                   <li>Get ready for the competition!</li>
                 </ul>
@@ -305,51 +319,80 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto py-6">
       <Card>
-        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>Registration Management</CardTitle>
+      <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
+  <CardTitle>Registration Management</CardTitle>
+  <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
+    {/* Registration Type Stats */}
+    <div className="flex justify-between sm:flex-col sm:items-center">
+      <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Rookie</span>
+          <span className="text-2xl font-bold text-blue-600">
+            {getParticipantTypeCounts(registrations).rookie}
+          </span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Intermediate</span>
+          <span className="text-2xl font-bold text-purple-600">
+            {getParticipantTypeCounts(registrations).intermediate}
+          </span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Open</span>
+          <span className="text-2xl font-bold text-orange-600">
+            {getParticipantTypeCounts(registrations).open}
+          </span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Intra</span>
+          <span className="text-2xl font-bold text-green-600">
+            {getParticipantTypeCounts(registrations).intra}
+          </span>
+        </div>
+      </div>
+    </div>
 
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
-            {/* Stats */}
-            <div className="flex justify-between sm:flex-col sm:items-center">
-              <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-muted-foreground">Total</span>
-                  <span className="text-2xl font-bold">{registrations.length}</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-muted-foreground">Approved</span>
-                  <span className="text-2xl font-bold text-green-600">
-                    {registrations.filter((reg) => reg.status === "approved").length}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-muted-foreground">Rejected</span>
-                  <span className="text-2xl font-bold text-red-600">
-                    {registrations.filter((reg) => reg.status === "rejected").length}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-muted-foreground">Arrived</span>
-                  <span className="text-2xl font-bold">
-                    {registrations.filter((reg) => reg.arrived === "yes").length}
-                  </span>
-                </div>
-              </div>
-            </div>
+    {/* Existing Status Stats */}
+    <div className="flex justify-between sm:flex-col sm:items-center">
+      <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Total</span>
+          <span className="text-2xl font-bold">{registrations.length}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Approved</span>
+          <span className="text-2xl font-bold text-green-600">
+            {registrations.filter((reg) => reg.status === "approved").length}
+          </span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Rejected</span>
+          <span className="text-2xl font-bold text-red-600">
+            {registrations.filter((reg) => reg.status === "rejected").length}
+          </span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-sm text-muted-foreground">Arrived</span>
+          <span className="text-2xl font-bold">
+            {registrations.filter((reg) => reg.arrived === "yes").length}
+          </span>
+        </div>
+      </div>
+    </div>
 
-            {/* Buttons */}
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={exportToCSV} className="flex-1 sm:flex-none">
-                <FileDown className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              <Button variant="destructive" onClick={handleLogout} className="flex-1 sm:flex-none">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+    {/* Buttons */}
+    <div className="flex space-x-2">
+      <Button variant="outline" onClick={exportToCSV} className="flex-1 sm:flex-none">
+        <FileDown className="mr-2 h-4 w-4" />
+        Export
+      </Button>
+      <Button variant="destructive" onClick={handleLogout} className="flex-1 sm:flex-none">
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </Button>
+    </div>
+  </div>
+</CardHeader>
         <CardContent>
           <div className="mb-6 flex items-center gap-4">
             <div className="relative flex-1">
