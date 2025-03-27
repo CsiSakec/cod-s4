@@ -538,28 +538,32 @@ export default function RegistrationForm() {
   }
 
   const calculateTotalPrice = () => {
-    let totalCost = 0
-    const isCSIMember = isCsiMember === "yes"
-
+    let totalCost = 0;
+    const isCSIMember = isCsiMember === "yes";
+  
     // Calculate intra-college cost immediately when selected
     if (participantTypes.includes("intra")) {
-      const intraPrice = isCSIMember ? 30 : 50
-      totalCost += intraPrice
+      const intraPrice = isCSIMember ? 30 : 50;
+      totalCost += intraPrice;
     }
-
+  
     // Calculate inter-college cost only if rounds are selected
     if (participantTypes.includes("inter")) {
       if (selectedRounds.length > 0) {
-        const pricePerRound = isFromSakec === "yes" && isCSIMember ? 100 : 150
-        totalCost += selectedRounds.length * pricePerRound
+        // Updated price calculation for inter-college rounds
+        const pricePerRound = isFromSakec === "yes" 
+          ? 100  // Fixed price of 100 for SAKEC students regardless of CSI membership
+          : (isCSIMember ? 100 : 150);  // For non-SAKEC students
+        
+        totalCost += selectedRounds.length * pricePerRound;
       } else {
         // If inter is selected but no rounds are chosen, only show intra cost if applicable
-        totalCost = participantTypes.includes("intra") ? totalCost : 0
+        totalCost = participantTypes.includes("intra") ? totalCost : 0;
       }
     }
-
-    setTotalPrice(totalCost)
-  }
+  
+    setTotalPrice(totalCost);
+  };
 
   // Update useEffect to recalculate price when participant types change
   useEffect(() => {
@@ -1089,11 +1093,11 @@ export default function RegistrationForm() {
                             <h3 className="font-semibold text-blue-800  mb-2">Inter-College Price Calculation</h3>
                             <p className="text-blue-700  mb-2">
                               <span className="font-medium">Price per round:</span> ₹
-                              {isFromSakec === "yes" && isCsiMember === "yes" ? "100" : "150"}
+                              {isFromSakec === "yes" ? "100" : (isCsiMember ? "100" : "150")}
                               <span className="text-sm ml-2">
-                                {isFromSakec === "yes" && isCsiMember === "yes"
-                                  ? "(CSI Member Price)"
-                                  : "(Standard Price)"}
+                                {isFromSakec === "yes"
+                                  ? "(Fixed Price for SAKEC students)"
+                                  : (isCsiMember ? "(CSI Member Price)" : "(Standard Price)")}
                               </span>
                             </p>
                             <p className="text-blue-700  mb-2">
