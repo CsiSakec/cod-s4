@@ -48,7 +48,11 @@ export function Rules() {
                 </div>
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-2">Open Round</h3>
-                  <p className="text-muted-foreground">March 27,2025 02:00pm to 03:00pm</p>
+                  <p className="text-muted-foreground">March 27,2025 01:30pm to 02:30pm</p>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-2">Intra Round</h3>
+                  <p className="text-muted-foreground">March 27,2025 03:00pm to 04:00pm</p>
                 </div>
               </div>
             </CardContent>
