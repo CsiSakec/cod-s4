@@ -1,13 +1,26 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { database } from "@/firebaseConfig"
-import { ref, onValue, update, remove, get } from "firebase/database"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { database } from "@/firebaseConfig";
+import { ref, onValue, update, remove, get } from "firebase/database";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -15,129 +28,156 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Toaster, toast } from "sonner"
-import { LogOut, FileDown, MoreVertical, Edit, Trash2, Eye, Search, X } from 'lucide-react'
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Toaster, toast } from "sonner";
+import {
+  LogOut,
+  FileDown,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye,
+  Search,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Update the Registration interface to match the new schema
 interface Registration {
-  id: string
+  id: string;
   personalInfo: {
-    name: string
-    email: string
-    phone: string
-    college: string
-    year: string
-    branch: string
-    prn: string | null
-    educationType?: "diploma" | "bachelors" | null
-  }
+    name: string;
+    email: string;
+    phone: string;
+    college: string;
+    year: string;
+    branch: string;
+    prn: string | null;
+    educationType?: "diploma" | "bachelors" | null;
+  };
   participationDetails: {
-    isFromSakec: "yes" | "no"
-    participantTypes: string[]
-    isCsiMember: "yes" | "no" | null
-    selectedRounds?: string[]
-    totalPrice: number
-    transactionID: string
-  }
+    isFromSakec: "yes" | "no";
+    participantTypes: string[];
+    isCsiMember: "yes" | "no" | null;
+    selectedRounds?: string[];
+    totalPrice: number;
+    transactionID: string;
+  };
   documents: {
-    paymentProof: string
-    csiProof: string | null
-  }
-  status: "pending" | "approved" | "rejected"
-  arrived: "yes" | "no"
-  createdAt: string
+    paymentProof: string;
+    csiProof: string | null;
+  };
+  status: "pending" | "approved" | "rejected";
+  arrived: "yes" | "no";
+  createdAt: string;
 }
 
 export default function AdminDashboard() {
-  const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isProofDialogOpen, setIsProofDialogOpen] = useState(false)
-  const router = useRouter()
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [filteredRegistrations, setFilteredRegistrations] = useState<
+    Registration[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRegistration, setSelectedRegistration] =
+    useState<Registration | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isProofDialogOpen, setIsProofDialogOpen] = useState(false);
+  const router = useRouter();
   const getParticipantTypeCounts = (registrations: Registration[]) => {
     return {
-      rookie: registrations.filter(reg => 
-        reg.participationDetails.participantTypes.includes("inter") && 
-        reg.participationDetails.selectedRounds?.includes("Rookie(round1)")).length,
-      intermediate: registrations.filter(reg => 
-        reg.participationDetails.participantTypes.includes("inter") && 
-        reg.participationDetails.selectedRounds?.includes("Advanced(round2)")).length,
-      open: registrations.filter(reg => 
-        reg.participationDetails.participantTypes.includes("inter") && 
-        reg.participationDetails.selectedRounds?.includes("Open(round3)")).length,
-      intra: registrations.filter(reg => 
-        reg.participationDetails.participantTypes.includes("intra")).length
-    }
-  }
+      rookie: registrations.filter(
+        (reg) =>
+          reg.participationDetails.participantTypes.includes("inter") &&
+          reg.participationDetails.selectedRounds?.includes("Rookie(round1)"),
+      ).length,
+      open: registrations.filter(
+        (reg) =>
+          reg.participationDetails.participantTypes.includes("inter") &&
+          reg.participationDetails.selectedRounds?.includes("Open(round2)"),
+      ).length,
+      intra: registrations.filter((reg) =>
+        reg.participationDetails.participantTypes.includes("intra"),
+      ).length,
+    };
+  };
   // Check if admin is authenticated
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true"
+    const isAuthenticated =
+      localStorage.getItem("adminAuthenticated") === "true";
     if (!isAuthenticated) {
-      router.push("/admin")
+      router.push("/admin");
     } else {
       // Fetch registrations from Firebase
-      fetchRegistrations()
+      fetchRegistrations();
     }
-  }, [router])
+  }, [router]);
 
   // Update the fetchRegistrations function to handle the new structure
   const fetchRegistrations = () => {
-    setIsLoading(true)
-    const registrationsRef = ref(database, "registrations")
+    setIsLoading(true);
+    const registrationsRef = ref(database, "registrations");
 
     onValue(registrationsRef, (snapshot) => {
-      const data = snapshot.val()
+      const data = snapshot.val();
       if (data) {
-        const registrationsList = Object.values(data) as Registration[]
-        setRegistrations(registrationsList)
-        setFilteredRegistrations(registrationsList)
+        const registrationsList = Object.values(data) as Registration[];
+        setRegistrations(registrationsList);
+        setFilteredRegistrations(registrationsList);
       } else {
-        setRegistrations([])
-        setFilteredRegistrations([])
+        setRegistrations([]);
+        setFilteredRegistrations([]);
       }
-      setIsLoading(false)
-    })
-  }
+      setIsLoading(false);
+    });
+  };
 
   // Handle search
   useEffect(() => {
     if (searchTerm.trim() === "") {
-      setFilteredRegistrations(registrations)
+      setFilteredRegistrations(registrations);
     } else {
       const filtered = registrations.filter(
         (reg) =>
-          reg.personalInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          reg.personalInfo.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          reg.personalInfo.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          reg.personalInfo.email
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           reg.personalInfo.phone.includes(searchTerm) ||
           (reg.personalInfo.prn && reg.personalInfo.prn.includes(searchTerm)),
-      )
-      setFilteredRegistrations(filtered)
+      );
+      setFilteredRegistrations(filtered);
     }
-  }, [searchTerm, registrations])
+  }, [searchTerm, registrations]);
 
   // Update the handleStatusChange function to include the new email template
-  const handleStatusChange = async (participantId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    participantId: string,
+    newStatus: string,
+  ) => {
     try {
-      const participantRef = ref(database, `registrations/${participantId}`)
-      await update(participantRef, { status: newStatus })
+      const participantRef = ref(database, `registrations/${participantId}`);
+      await update(participantRef, { status: newStatus });
 
       // Get participant data
-      const participantSnapshot = await get(participantRef)
-      const participant = participantSnapshot.val()
+      const participantSnapshot = await get(participantRef);
+      const participant = participantSnapshot.val();
 
       if (newStatus === "pending") {
-        toast.success(`Status updated to ${newStatus}`)
-        return // Exit early without sending an email
+        toast.success(`Status updated to ${newStatus}`);
+        return; // Exit early without sending an email
       }
 
       // Prepare email data based on status
@@ -196,7 +236,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         `,
-      }
+      };
 
       // Send status email
       const response = await fetch("/api/registeremail", {
@@ -205,60 +245,63 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(emailData),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to send status email")
+        throw new Error("Failed to send status email");
       }
 
-      toast.success(`Status updated to ${newStatus} and email sent`)
+      toast.success(`Status updated to ${newStatus} and email sent`);
     } catch (error) {
-      console.error("Status update error:", error)
-      toast.error("Failed to update status or send email")
+      console.error("Status update error:", error);
+      toast.error("Failed to update status or send email");
     }
-  }
+  };
 
   const handleArrivedChange = async (id: string, arrived: string) => {
     try {
-      const registrationRef = ref(database, `registrations/${id}`)
-      await update(registrationRef, { arrived })
-      toast.success(`Arrival status updated to ${arrived}`)
+      const registrationRef = ref(database, `registrations/${id}`);
+      await update(registrationRef, { arrived });
+      toast.success(`Arrival status updated to ${arrived}`);
     } catch (error) {
-      toast.error("Failed to update arrival status")
-      console.error("Error updating arrival status:", error)
+      toast.error("Failed to update arrival status");
+      console.error("Error updating arrival status:", error);
     }
-  }
+  };
 
   const handleDeleteRegistration = async (id: string) => {
     try {
-      const registrationRef = ref(database, `registrations/${id}`)
-      await remove(registrationRef)
-      toast.success("Registration deleted successfully")
-      setIsDeleteDialogOpen(false)
+      const registrationRef = ref(database, `registrations/${id}`);
+      await remove(registrationRef);
+      toast.success("Registration deleted successfully");
+      setIsDeleteDialogOpen(false);
     } catch (error) {
-      toast.error("Failed to delete registration")
-      console.error("Error deleting registration:", error)
+      toast.error("Failed to delete registration");
+      console.error("Error deleting registration:", error);
     }
-  }
+  };
 
   const handleEditRegistration = async () => {
-    if (!selectedRegistration) return
+    if (!selectedRegistration) return;
 
     try {
-      const registrationRef = ref(database, `registrations/${selectedRegistration.id}`)
-      await update(registrationRef, selectedRegistration)
-      toast.success("Registration updated successfully")
-      setIsEditDialogOpen(false)
+      const registrationRef = ref(
+        database,
+        `registrations/${selectedRegistration.id}`,
+      );
+      await update(registrationRef, selectedRegistration);
+      toast.success("Registration updated successfully");
+      setIsEditDialogOpen(false);
     } catch (error) {
-      toast.error("Failed to update registration")
-      console.error("Error updating registration:", error)
+      toast.error("Failed to update registration");
+      console.error("Error updating registration:", error);
     }
-  }
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated")
-    router.push("/admin")
-  }
+    localStorage.removeItem("adminAuthenticated");
+    router.push("/admin");
+  };
 
   // Update the exportToCSV function to include new fields
   const exportToCSV = () => {
@@ -280,7 +323,7 @@ export default function AdminDashboard() {
       "Status",
       "Arrived",
       "Created At",
-    ]
+    ];
 
     const csvRows = filteredRegistrations.map((reg) => [
       reg.id,
@@ -300,99 +343,122 @@ export default function AdminDashboard() {
       reg.status,
       reg.arrived || "no",
       reg.createdAt,
-    ])
+    ]);
 
-    const csvContent = [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n")
+    const csvContent = [
+      headers.join(","),
+      ...csvRows.map((row) => row.join(",")),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `registrations_${new Date().toISOString().split("T")[0]}.csv`)
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `registrations_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Update the render method to include new fields in the table and dialogs
   return (
     <div className="container mx-auto py-6">
       <Card>
-      <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
-  <CardTitle>Registration Management</CardTitle>
-  <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
-    {/* Registration Type Stats */}
-    <div className="flex justify-between sm:flex-col sm:items-center">
-      <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Rookie</span>
-          <span className="text-2xl font-bold text-blue-600">
-            {getParticipantTypeCounts(registrations).rookie}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Intermediate</span>
-          <span className="text-2xl font-bold text-purple-600">
-            {getParticipantTypeCounts(registrations).intermediate}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Open</span>
-          <span className="text-2xl font-bold text-orange-600">
-            {getParticipantTypeCounts(registrations).open}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Intra</span>
-          <span className="text-2xl font-bold text-green-600">
-            {getParticipantTypeCounts(registrations).intra}
-          </span>
-        </div>
-      </div>
-    </div>
+        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>Registration Management</CardTitle>
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6">
+            {/* Registration Type Stats */}
+            <div className="flex justify-between sm:flex-col sm:items-center">
+              <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Rookie</span>
+                  <span className="text-2xl font-bold text-blue-600">
+                    {getParticipantTypeCounts(registrations).rookie}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Open</span>
+                  <span className="text-2xl font-bold text-orange-600">
+                    {getParticipantTypeCounts(registrations).open}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Intra</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {getParticipantTypeCounts(registrations).intra}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-    {/* Existing Status Stats */}
-    <div className="flex justify-between sm:flex-col sm:items-center">
-      <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Total</span>
-          <span className="text-2xl font-bold">{registrations.length}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Approved</span>
-          <span className="text-2xl font-bold text-green-600">
-            {registrations.filter((reg) => reg.status === "approved").length}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Rejected</span>
-          <span className="text-2xl font-bold text-red-600">
-            {registrations.filter((reg) => reg.status === "rejected").length}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-sm text-muted-foreground">Arrived</span>
-          <span className="text-2xl font-bold">
-            {registrations.filter((reg) => reg.arrived === "yes").length}
-          </span>
-        </div>
-      </div>
-    </div>
+            {/* Existing Status Stats */}
+            <div className="flex justify-between sm:flex-col sm:items-center">
+              <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-2xl font-bold">
+                    {registrations.length}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Approved
+                  </span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {
+                      registrations.filter((reg) => reg.status === "approved")
+                        .length
+                    }
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Rejected
+                  </span>
+                  <span className="text-2xl font-bold text-red-600">
+                    {
+                      registrations.filter((reg) => reg.status === "rejected")
+                        .length
+                    }
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-muted-foreground">Arrived</span>
+                  <span className="text-2xl font-bold">
+                    {
+                      registrations.filter((reg) => reg.arrived === "yes")
+                        .length
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
 
-    {/* Buttons */}
-    <div className="flex space-x-2">
-      <Button variant="outline" onClick={exportToCSV} className="flex-1 sm:flex-none">
-        <FileDown className="mr-2 h-4 w-4" />
-        Export
-      </Button>
-      <Button variant="destructive" onClick={handleLogout} className="flex-1 sm:flex-none">
-        <LogOut className="mr-2 h-4 w-4" />
-        Logout
-      </Button>
-    </div>
-  </div>
-</CardHeader>
+            {/* Buttons */}
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={exportToCSV}
+                className="flex-1 sm:flex-none"
+              >
+                <FileDown className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleLogout}
+                className="flex-1 sm:flex-none"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
           <div className="mb-6 flex items-center gap-4">
             <div className="relative flex-1">
@@ -419,7 +485,9 @@ export default function AdminDashboard() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : filteredRegistrations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No registrations found</div>
+            <div className="text-center py-8 text-gray-500">
+              No registrations found
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -442,25 +510,39 @@ export default function AdminDashboard() {
                 <TableBody>
                   {filteredRegistrations.map((registration) => (
                     <TableRow key={registration.id}>
-                      <TableCell className="font-medium">{registration.personalInfo.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {registration.personalInfo.name}
+                      </TableCell>
                       <TableCell>{registration.personalInfo.email}</TableCell>
                       <TableCell>{registration.personalInfo.phone}</TableCell>
                       <TableCell>{registration.personalInfo.year}</TableCell>
-                      <TableCell>{registration.personalInfo.prn || "N/A"}</TableCell>
-                      <TableCell>{registration.participationDetails.participantTypes.join(", ")}</TableCell>
                       <TableCell>
-                        {registration.participationDetails.selectedRounds && registration.participationDetails.selectedRounds.length > 0
-                          ? registration.participationDetails.selectedRounds.join(", ")
+                        {registration.personalInfo.prn || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {registration.participationDetails.participantTypes.join(
+                          ", ",
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {registration.participationDetails.selectedRounds &&
+                        registration.participationDetails.selectedRounds
+                          .length > 0
+                          ? registration.participationDetails.selectedRounds.join(
+                              ", ",
+                            )
                           : "N/A"}
                       </TableCell>
-                      <TableCell>{registration.participationDetails.transactionID}</TableCell>
+                      <TableCell>
+                        {registration.participationDetails.transactionID}
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedRegistration(registration)
-                            setIsProofDialogOpen(true)
+                            setSelectedRegistration(registration);
+                            setIsProofDialogOpen(true);
                           }}
                         >
                           <Eye className="h-4 w-4 mr-1" /> View Proof
@@ -469,22 +551,32 @@ export default function AdminDashboard() {
                       <TableCell>
                         <Select
                           defaultValue={registration.status}
-                          onValueChange={(value) => handleStatusChange(registration.id, value)}
+                          onValueChange={(value) =>
+                            handleStatusChange(registration.id, value)
+                          }
                         >
                           <SelectTrigger
                             className={cn("w-[130px]", {
-                              "text-green-600": registration.status === "approved",
-                              "text-red-600": registration.status === "rejected",
+                              "text-green-600":
+                                registration.status === "approved",
+                              "text-red-600":
+                                registration.status === "rejected",
                             })}
                           >
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved" className="text-green-600">
+                            <SelectItem
+                              value="approved"
+                              className="text-green-600"
+                            >
                               Approved
                             </SelectItem>
-                            <SelectItem value="rejected" className="text-red-600">
+                            <SelectItem
+                              value="rejected"
+                              className="text-red-600"
+                            >
                               Rejected
                             </SelectItem>
                           </SelectContent>
@@ -493,7 +585,9 @@ export default function AdminDashboard() {
                       <TableCell>
                         <Select
                           defaultValue={registration.arrived || "no"}
-                          onValueChange={(value) => handleArrivedChange(registration.id, value)}
+                          onValueChange={(value) =>
+                            handleArrivedChange(registration.id, value)
+                          }
                         >
                           <SelectTrigger className="w-[100px]">
                             <SelectValue placeholder="Arrived" />
@@ -514,8 +608,8 @@ export default function AdminDashboard() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
-                                setSelectedRegistration(registration)
-                                setIsViewDialogOpen(true)
+                                setSelectedRegistration(registration);
+                                setIsViewDialogOpen(true);
                               }}
                             >
                               <Eye className="mr-2 h-4 w-4" />
@@ -523,8 +617,8 @@ export default function AdminDashboard() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                setSelectedRegistration(registration)
-                                setIsEditDialogOpen(true)
+                                setSelectedRegistration(registration);
+                                setIsEditDialogOpen(true);
                               }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
@@ -533,8 +627,8 @@ export default function AdminDashboard() {
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => {
-                                setSelectedRegistration(registration)
-                                setIsDeleteDialogOpen(true)
+                                setSelectedRegistration(registration);
+                                setIsDeleteDialogOpen(true);
                               }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -562,29 +656,38 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Personal Information
+                  </h3>
                   <div className="space-y-2">
                     <p>
-                      <span className="font-medium">Name:</span> {selectedRegistration.personalInfo.name}
+                      <span className="font-medium">Name:</span>{" "}
+                      {selectedRegistration.personalInfo.name}
                     </p>
                     <p>
-                      <span className="font-medium">Email:</span> {selectedRegistration.personalInfo.email}
+                      <span className="font-medium">Email:</span>{" "}
+                      {selectedRegistration.personalInfo.email}
                     </p>
                     <p>
-                      <span className="font-medium">Phone:</span> {selectedRegistration.personalInfo.phone}
+                      <span className="font-medium">Phone:</span>{" "}
+                      {selectedRegistration.personalInfo.phone}
                     </p>
                     <p>
-                      <span className="font-medium">College:</span> {selectedRegistration.personalInfo.college}
+                      <span className="font-medium">College:</span>{" "}
+                      {selectedRegistration.personalInfo.college}
                     </p>
                     <p>
-                      <span className="font-medium">Year:</span> {selectedRegistration.personalInfo.year}
+                      <span className="font-medium">Year:</span>{" "}
+                      {selectedRegistration.personalInfo.year}
                     </p>
                     <p>
-                      <span className="font-medium">Branch:</span> {selectedRegistration.personalInfo.branch}
+                      <span className="font-medium">Branch:</span>{" "}
+                      {selectedRegistration.personalInfo.branch}
                     </p>
                     {selectedRegistration.personalInfo.prn && (
                       <p>
-                        <span className="font-medium">PRN:</span> {selectedRegistration.personalInfo.prn}
+                        <span className="font-medium">PRN:</span>{" "}
+                        {selectedRegistration.personalInfo.prn}
                       </p>
                     )}
                     {selectedRegistration.personalInfo.educationType && (
@@ -596,7 +699,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Participation Details</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Participation Details
+                  </h3>
                   <div className="space-y-2">
                     <p>
                       <span className="font-medium">SAKEC Student:</span>{" "}
@@ -604,22 +709,29 @@ export default function AdminDashboard() {
                     </p>
                     <p className="text-red-600">
                       <span className="font-medium">Participant Type:</span>{" "}
-                      {selectedRegistration.participationDetails.participantTypes.join(", ")}
+                      {selectedRegistration.participationDetails.participantTypes.join(
+                        ", ",
+                      )}
                     </p>
                     <p>
                       <span className="font-medium">CSI Member:</span>{" "}
-                      {selectedRegistration.participationDetails.isCsiMember || "N/A"}
+                      {selectedRegistration.participationDetails.isCsiMember ||
+                        "N/A"}
                     </p>
                     <p>
                       <span className="font-medium">Selected Rounds:</span>{" "}
-                      {selectedRegistration?.participationDetails?.isFromSakec &&
-  (Array.isArray(selectedRegistration.participationDetails.selectedRounds) &&
-  selectedRegistration.participationDetails.selectedRounds.length > 0
-    ? selectedRegistration.participationDetails.selectedRounds.join(", ")
-    : "None")}
-
-
-
+                      {selectedRegistration?.participationDetails
+                        ?.isFromSakec &&
+                        (Array.isArray(
+                          selectedRegistration.participationDetails
+                            .selectedRounds,
+                        ) &&
+                        selectedRegistration.participationDetails.selectedRounds
+                          .length > 0
+                          ? selectedRegistration.participationDetails.selectedRounds.join(
+                              ", ",
+                            )
+                          : "None")}
                     </p>
                     <p>
                       <span className="font-medium">Total Price:</span> ₹
@@ -630,14 +742,18 @@ export default function AdminDashboard() {
                       {selectedRegistration.participationDetails.transactionID}
                     </p>
                     <p>
-                      <span className="font-medium">Status:</span> {selectedRegistration.status}
+                      <span className="font-medium">Status:</span>{" "}
+                      {selectedRegistration.status}
                     </p>
                     <p>
-                      <span className="font-medium">Arrived:</span> {selectedRegistration.arrived || "no"}
+                      <span className="font-medium">Arrived:</span>{" "}
+                      {selectedRegistration.arrived || "no"}
                     </p>
                     <p>
                       <span className="font-medium">Created At:</span>{" "}
-                      {new Date(selectedRegistration.createdAt).toLocaleString()}
+                      {new Date(
+                        selectedRegistration.createdAt,
+                      ).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -650,7 +766,10 @@ export default function AdminDashboard() {
                     <p className="font-medium mb-2">Payment Proof</p>
                     <div className="border rounded-md overflow-hidden">
                       <img
-                        src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
+                        src={
+                          selectedRegistration.documents.paymentProof ||
+                          "/placeholder.svg"
+                        }
                         alt="Payment Proof"
                         className="w-full h-auto max-h-[300px] object-contain"
                       />
@@ -662,7 +781,10 @@ export default function AdminDashboard() {
                       <p className="font-medium mb-2">CSI Membership Proof</p>
                       <div className="border rounded-md overflow-hidden">
                         <img
-                          src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
+                          src={
+                            selectedRegistration.documents.csiProof ||
+                            "/placeholder.svg"
+                          }
                           alt="CSI Membership Proof"
                           className="w-full h-auto max-h-[300px] object-contain"
                         />
@@ -684,7 +806,9 @@ export default function AdminDashboard() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Registration</DialogTitle>
-            <DialogDescription>Make changes to the registration details</DialogDescription>
+            <DialogDescription>
+              Make changes to the registration details
+            </DialogDescription>
           </DialogHeader>
           {selectedRegistration && (
             <div className="space-y-4">
@@ -765,7 +889,10 @@ export default function AdminDashboard() {
                         ...selectedRegistration,
                         personalInfo: {
                           ...selectedRegistration.personalInfo,
-                          educationType: value as "diploma" | "bachelors" | null,
+                          educationType: value as
+                            | "diploma"
+                            | "bachelors"
+                            | null,
                         },
                       })
                     }
@@ -798,7 +925,7 @@ export default function AdminDashboard() {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -824,7 +951,10 @@ export default function AdminDashboard() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleEditRegistration}>Save Changes</Button>
@@ -838,16 +968,23 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this registration? This action cannot be undone.
+              Are you sure you want to delete this registration? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => selectedRegistration && handleDeleteRegistration(selectedRegistration.id)}
+              onClick={() =>
+                selectedRegistration &&
+                handleDeleteRegistration(selectedRegistration.id)
+              }
             >
               Delete
             </Button>
@@ -859,9 +996,16 @@ export default function AdminDashboard() {
       <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] mt-7 overflow-y-auto">
           <DialogHeader className="sticky top-0 bg-background z-50 pb-4 mb-4 border-b">
-            <DialogTitle className="text-xl font-semibold">Payment Proof</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Payment Proof
+            </DialogTitle>
             <DialogDescription>
-              {selectedRegistration && <p>Transaction ID: {selectedRegistration.participationDetails.transactionID}</p>}
+              {selectedRegistration && (
+                <p>
+                  Transaction ID:{" "}
+                  {selectedRegistration.participationDetails.transactionID}
+                </p>
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -870,18 +1014,27 @@ export default function AdminDashboard() {
               <div className="flex flex-col items-center justify-center gap-6">
                 <div className="w-full">
                   <img
-                    src={selectedRegistration.documents.paymentProof || "/placeholder.svg"}
+                    src={
+                      selectedRegistration.documents.paymentProof ||
+                      "/placeholder.svg"
+                    }
                     alt="Payment Proof"
                     className="w-full h-auto max-h-[500px] object-contain border rounded-md"
                   />
                 </div>
 
-                {selectedRegistration.participationDetails.isCsiMember === "yes" &&
+                {selectedRegistration.participationDetails.isCsiMember ===
+                  "yes" &&
                   selectedRegistration.documents.csiProof && (
                     <div className="w-full">
-                      <h3 className="text-lg font-semibold mb-2">CSI Membership Proof</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        CSI Membership Proof
+                      </h3>
                       <img
-                        src={selectedRegistration.documents.csiProof || "/placeholder.svg"}
+                        src={
+                          selectedRegistration.documents.csiProof ||
+                          "/placeholder.svg"
+                        }
                         alt="CSI Membership Proof"
                         className="w-full h-auto max-h-[500px] object-contain border rounded-md"
                       />
@@ -898,5 +1051,5 @@ export default function AdminDashboard() {
       </Dialog>
       <Toaster />
     </div>
-  )
+  );
 }
