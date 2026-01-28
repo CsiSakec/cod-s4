@@ -1,29 +1,54 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Toaster, toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, AlertCircle, School, User, CreditCard } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { database } from "@/firebaseConfig"
-import { ref, set } from "firebase/database"
-import imageCompression from 'browser-image-compression';
+import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Toaster, toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CheckCircle2,
+  AlertCircle,
+  School,
+  User,
+  CreditCard,
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { database } from "@/firebaseConfig";
+import { ref, set } from "firebase/database";
+import imageCompression from "browser-image-compression";
 
 function SuccessModal({
   open,
   onClose,
 }: {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -36,16 +61,21 @@ function SuccessModal({
         </DialogHeader>
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
-            Thank you for registering! Your registration has been submitted successfully.
+            Thank you for registering! Your registration has been submitted
+            successfully.
           </p>
-          <p className="text-sm text-muted-foreground">You will receive a confirmation email shortly.</p>
+          <p className="text-sm text-muted-foreground">
+            You will receive a confirmation email shortly.
+          </p>
           <a
-            href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH"
+            href="https://chat.whatsapp.com/JNRLhoXG5XF7lHCfKbIG41?mode=gi_t"
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full"
           >
-            <Button className="w-full bg-green-600 hover:bg-green-700 mb-2">Join WhatsApp Group</Button>
+            <Button className="w-full bg-green-600 hover:bg-green-700 mb-2">
+              Join WhatsApp Group
+            </Button>
           </a>
           <Button onClick={onClose} className="w-full">
             Close
@@ -53,67 +83,67 @@ function SuccessModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 // Modified schema to include new fields for education type
 interface ParticipantType {
-  inter: 'inter'
-  intra: 'intra'
+  inter: "inter";
+  intra: "intra";
 }
 
 interface EducationType {
-  diploma: 'diploma'
-  bachelors: 'bachelors'
+  diploma: "diploma";
+  bachelors: "bachelors";
 }
 
 interface FormValues {
-  isFromSakec: 'yes' | 'no'
-  educationType?: keyof EducationType
-  participantType?: Array<keyof ParticipantType>
-  name: string
-  year: string
-  branch: string
-  otherBranch?: string
-  email: string
-  phone: string
-  prn?: string
-  college: string
-  isCsiMember?: 'yes' | 'no'
-  rounds?: string[]
-  transactionID: string
-  paymentProof?: File
-  csiProof?: File
+  isFromSakec: "yes" | "no";
+  educationType?: keyof EducationType;
+  participantType?: Array<keyof ParticipantType>;
+  name: string;
+  year: string;
+  branch: string;
+  otherBranch?: string;
+  email: string;
+  phone: string;
+  prn?: string;
+  college: string;
+  isCsiMember?: "yes" | "no";
+  rounds?: string[];
+  transactionID: string;
+  paymentProof?: File;
+  csiProof?: File;
 }
 
 // Define interfaces for validation schema
 interface ParticipantType {
-  inter: 'inter'
-  intra: 'intra'
+  inter: "inter";
+  intra: "intra";
 }
 
 interface EducationType {
-  diploma: 'diploma'
-  bachelors: 'bachelors'
+  diploma: "diploma";
+  bachelors: "bachelors";
 }
 
 interface FormValues {
-  isFromSakec: 'yes' | 'no'
-  educationType?: keyof EducationType
-  participantType?: Array<keyof ParticipantType>
-  name: string
-  year: string
-  branch: string
-  otherBranch?: string
-  email: string
-  phone: string
-  prn?: string
-  college: string
-  isCsiMember?: 'yes' | 'no'
-  rounds?: string[]
-  transactionID: string
-  paymentProof?: File
-  csiProof?: File
+  isFromSakec: "yes" | "no";
+  educationType?: keyof EducationType;
+  participantType?: Array<keyof ParticipantType>;
+  name: string;
+  year: string;
+  branch: string;
+  otherBranch?: string;
+  email: string;
+  phone: string;
+  prn?: string;
+  college: string;
+  isCsiMember?: "yes" | "no";
+  rounds?: string[];
+  transactionID: string;
+  paymentProof?: File;
+  csiProof?: File;
 }
 
 const formSchema: z.ZodType<FormValues> = z.object({
@@ -133,22 +163,30 @@ const formSchema: z.ZodType<FormValues> = z.object({
   prn: z
     .string()
     .optional()
-    .refine((val: string | undefined) => !val || /^[a-zA-Z0-9]{1,14}$/.test(val), {
-      message: "PRN must be alphanumeric and up to 14 characters if provided",
-    }),
-  college: z.string().min(2, { message: "College name must be at least 2 characters." }),
-  isCsiMember: z.enum(["yes", "no"]).optional(),
-  rounds: z.array(z.string())
-    .optional()
     .refine(
-      (rounds) => {
-        return true; // Initial validation always passes
-      }
-    )
+      (val: string | undefined) => !val || /^[a-zA-Z0-9]{1,14}$/.test(val),
+      {
+        message: "PRN must be alphanumeric and up to 14 characters if provided",
+      },
+    ),
+  college: z
+    .string()
+    .min(2, { message: "College name must be at least 2 characters." }),
+  isCsiMember: z.enum(["yes", "no"]).optional(),
+  rounds: z
+    .array(z.string())
+    .optional()
+    .refine((rounds) => {
+      return true; // Initial validation always passes
+    })
     .superRefine((rounds, ctx) => {
       const participantType = ctx.path[0] as unknown as string[];
 
-      if (participantType && participantType.length === 1 && participantType.includes("intra")) {
+      if (
+        participantType &&
+        participantType.length === 1 &&
+        participantType.includes("intra")
+      ) {
         return true;
       }
 
@@ -156,7 +194,8 @@ const formSchema: z.ZodType<FormValues> = z.object({
         if (!rounds || rounds.length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Please select at least one round for inter-college participation",
+            message:
+              "Please select at least one round for inter-college participation",
           });
           return false;
         }
@@ -167,7 +206,7 @@ const formSchema: z.ZodType<FormValues> = z.object({
   transactionID: z.string().min(2, { message: "Please enter it" }),
   paymentProof: z.any().optional(),
   csiProof: z.any().optional(),
-})
+});
 
 const compressImage = async (file: File) => {
   const options = {
@@ -186,16 +225,18 @@ const compressImage = async (file: File) => {
 };
 
 export default function RegistrationForm() {
-  const [step, setStep] = useState(1)
-  const [isFromSakec, setIsFromSakec] = useState<"yes" | "no" | null>(null)
-  const [educationType, setEducationType] = useState<"diploma" | "bachelors" | null>(null)
-  const [participantTypes, setParticipantTypes] = useState<string[]>([])
-  const [isCsiMember, setIsCsiMember] = useState<"yes" | "no" | null>(null)
-  const [year, setYear] = useState<string | null>(null)
-  const [selectedRounds, setSelectedRounds] = useState<string[]>([])
-  const [totalPrice, setTotalPrice] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [step, setStep] = useState(1);
+  const [isFromSakec, setIsFromSakec] = useState<"yes" | "no" | null>(null);
+  const [educationType, setEducationType] = useState<
+    "diploma" | "bachelors" | null
+  >(null);
+  const [participantTypes, setParticipantTypes] = useState<string[]>([]);
+  const [isCsiMember, setIsCsiMember] = useState<"yes" | "no" | null>(null);
+  const [year, setYear] = useState<string | null>(null);
+  const [selectedRounds, setSelectedRounds] = useState<string[]>([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -215,27 +256,27 @@ export default function RegistrationForm() {
       transactionID: "",
       rounds: [],
     },
-  })
+  });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
       // Basic validation
       if (!values.isFromSakec) {
-        throw new Error("Please select if you are from SAKEC College")
+        throw new Error("Please select if you are from SAKEC College");
       }
 
       if (!values.name || !values.email || !values.phone) {
-        throw new Error("Personal details are required")
+        throw new Error("Personal details are required");
       }
 
       if (!values.paymentProof) {
-        throw new Error("Payment proof is required")
+        throw new Error("Payment proof is required");
       }
 
       if (isFromSakec === "yes" && isCsiMember === "yes" && !values.csiProof) {
-        throw new Error("CSI membership proof is required")
+        throw new Error("CSI membership proof is required");
       }
 
       // Compress payment proof
@@ -263,7 +304,7 @@ export default function RegistrationForm() {
       }
 
       // Create registration data object
-      const registrationId = Date.now().toString()
+      const registrationId = Date.now().toString();
       const registrationData = {
         id: registrationId,
         personalInfo: {
@@ -272,7 +313,8 @@ export default function RegistrationForm() {
           phone: values.phone,
           college: values.college,
           year: values.year,
-          branch: values.branch === "OTHER" ? values.otherBranch : values.branch,
+          branch:
+            values.branch === "OTHER" ? values.otherBranch : values.branch,
           prn: isFromSakec === "yes" ? values.prn : null,
           educationType: isFromSakec === "no" ? educationType : null,
         },
@@ -290,11 +332,11 @@ export default function RegistrationForm() {
         },
         status: "pending",
         createdAt: new Date().toISOString(),
-      }
+      };
 
       // Save to Firebase Realtime Database
-      const registrationRef = ref(database, `registrations/${registrationId}`)
-      await set(registrationRef, registrationData)
+      const registrationRef = ref(database, `registrations/${registrationId}`);
+      await set(registrationRef, registrationData);
 
       // Send confirmation email
       try {
@@ -316,35 +358,53 @@ export default function RegistrationForm() {
       <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
       <ul style="list-style: none; padding: 0; margin: 0;">
         <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
-        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
-        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
-        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
-        <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
-        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
-        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
+        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${
+          values.name
+        }</li>
+        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${
+          values.email
+        }</li>
+        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${
+          values.phone
+        }</li>
+        <li style="margin-bottom: 10px;"><strong>College:</strong> ${
+          values.college
+        }</li>
+        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${
+          values.year
+        }</li>
+        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${
+          values.branch
+        }</li>
         <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
-        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
+        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${
+          values.transactionID
+        }</li>
       </ul>
     </div>
 
     <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
       <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Selected Rounds:</h3>
       <ul style="margin: 0; padding-left: 20px;">
-        ${selectedRounds.map(round => `<li>${round}</li>`).join('')}
+        ${selectedRounds.map((round) => `<li>${round}</li>`).join("")}
       </ul>
     </div>
 
-    ${values.participantType?.includes("intra") ? `
+    ${
+      values.participantType?.includes("intra")
+        ? `
     <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
       <h3 style="color: #155724; font-size: 16px; margin-bottom: 10px;">Intra-College Participation</h3>
       <p style="font-size: 14px; color: #155724;">You have  registered as an <strong>Intra-College</strong> participant.</p>
-    </div>` : ''}
+    </div>`
+        : ""
+    }
 
     <div style="background-color: #e8f0fe; padding: 15px; border-radius: 5px; margin: 20px 0;">
       <h3 style="color: #1a73e8; font-size: 16px; margin-bottom: 10px;">Join the WhatsApp Group:</h3>
       <p style="font-size: 14px; margin-bottom: 10px;">Stay updated with event details and announcements:</p>
       <p style="text-align: center;">
-        <a href="https://chat.whatsapp.com/ISvgEsspRn27IiuUDNPtYH" target="_blank" 
+        <a href="https://chat.whatsapp.com/JNRLhoXG5XF7lHCfKbIG41?mode=gi_t" target="_blank" 
            style="display: inline-block; padding: 10px 15px; background-color: #25d366; 
                   color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Join WhatsApp Group
@@ -365,7 +425,7 @@ export default function RegistrationForm() {
 
 
           `,
-        }
+        };
 
         await fetch("/api/registeremail", {
           method: "POST",
@@ -373,250 +433,272 @@ export default function RegistrationForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(emailData),
-        })
+        });
 
         // Show success message and reset form
-        toast.success("Registration successful! Check your email for confirmation.")
-        setShowSuccessModal(true)
-        form.reset()
-        setStep(1)
+        toast.success(
+          "Registration successful! Check your email for confirmation.",
+        );
+        setShowSuccessModal(true);
+        form.reset();
+        setStep(1);
 
         // Reset all state
-        setParticipantTypes([])
-        setSelectedRounds([])
-        setIsFromSakec(null)
-        setEducationType(null)
-        setIsCsiMember(null)
-        setYear(null)
-        setTotalPrice(0)
+        setParticipantTypes([]);
+        setSelectedRounds([]);
+        setIsFromSakec(null);
+        setEducationType(null);
+        setIsCsiMember(null);
+        setYear(null);
+        setTotalPrice(0);
       } catch (emailError) {
-        console.error("Failed to send confirmation email:", emailError)
-        toast.error("Registration successful but failed to send confirmation email.")
+        console.error("Failed to send confirmation email:", emailError);
+        toast.error(
+          "Registration successful but failed to send confirmation email.",
+        );
       }
     } catch (error) {
-      console.error("Registration error:", error)
-      toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.")
+      console.error("Registration error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.",
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const nextStep = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       // Handle form validation before proceeding to next step
       if (step === 1) {
         if (!isFromSakec) {
-          toast.error("Please select if you are from SAKEC College")
-          return
+          toast.error("Please select if you are from SAKEC College");
+          return;
         }
 
         if (isFromSakec === "no" && !educationType) {
-          toast.error("Please select your education type")
-          return
+          toast.error("Please select your education type");
+          return;
         }
 
         if (isFromSakec === "yes" && participantTypes.length === 0) {
-          toast.error("Please select at least one participant type")
-          return
+          toast.error("Please select at least one participant type");
+          return;
         }
       }
 
       if (step === 2) {
-        const requiredFields = ["name", "email", "phone", "college", "year", "branch"]
+        const requiredFields = [
+          "name",
+          "email",
+          "phone",
+          "college",
+          "year",
+          "branch",
+        ];
         const missingFields = requiredFields.filter(
           (field) => !form.getValues(field as keyof z.infer<typeof formSchema>),
-        )
+        );
 
         if (missingFields.length > 0) {
-          toast.error(`Please fill in all required fields: ${missingFields.join(", ")}`)
-          return
+          toast.error(
+            `Please fill in all required fields: ${missingFields.join(", ")}`,
+          );
+          return;
         }
-        const phone = form.getValues("phone")
+        const phone = form.getValues("phone");
         if (!/^\d{10}$/.test(phone)) {
-          toast.error("Please enter a valid 10-digit phone number")
-          return
+          toast.error("Please enter a valid 10-digit phone number");
+          return;
         }
       }
 
       if (step === 3) {
         // Validate CSI membership selection for SAKEC students
         if (isFromSakec === "yes" && !isCsiMember) {
-          toast.error("Please indicate if you are a CSI SAKEC member")
-          return
+          toast.error("Please indicate if you are a CSI SAKEC member");
+          return;
         }
 
         // Only validate round selection if inter-college is selected AND it's not a SAKEC student with only intra selected
         if (
           participantTypes.includes("inter") &&
-          !(isFromSakec === "yes" && participantTypes.length === 1 && participantTypes.includes("intra")) &&
+          !(
+            isFromSakec === "yes" &&
+            participantTypes.length === 1 &&
+            participantTypes.includes("intra")
+          ) &&
           selectedRounds.length === 0
         ) {
-          toast.error("Please select at least one round for inter-college participation")
-          return
+          toast.error(
+            "Please select at least one round for inter-college participation",
+          );
+          return;
         }
       }
 
       if (step === 4) {
         if (!form.getValues().paymentProof) {
-          toast.error("Please upload payment proof")
-          return
+          toast.error("Please upload payment proof");
+          return;
         }
 
-        if (isFromSakec === "yes" && isCsiMember === "yes" && !form.getValues().csiProof) {
-          toast.error("Please upload CSI membership proof")
-          return
+        if (
+          isFromSakec === "yes" &&
+          isCsiMember === "yes" &&
+          !form.getValues().csiProof
+        ) {
+          toast.error("Please upload CSI membership proof");
+          return;
         }
       }
 
-      setStep(step + 1)
+      setStep(step + 1);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const prevStep = () => {
-    setStep(step - 1)
-  }
+    setStep(step - 1);
+  };
 
   const handleSakecChange = (value: "yes" | "no") => {
-    setIsFromSakec(value)
-    form.setValue("isFromSakec", value)
+    setIsFromSakec(value);
+    form.setValue("isFromSakec", value);
 
     if (value === "no") {
       // For non-SAKEC, only inter-college is available
-      setParticipantTypes(["inter"])
-      form.setValue("participantType", ["inter"])
-      setIsCsiMember(null) // Reset CSI member as it's not applicable
-      form.setValue("isCsiMember", undefined)
+      setParticipantTypes(["inter"]);
+      form.setValue("participantType", ["inter"]);
+      setIsCsiMember(null); // Reset CSI member as it's not applicable
+      form.setValue("isCsiMember", undefined);
     } else {
       // Reset for SAKEC students
-      setParticipantTypes([])
-      form.setValue("participantType", [])
-      setEducationType(null) // Reset education type as it's not applicable
-      form.setValue("educationType", undefined)
+      setParticipantTypes([]);
+      form.setValue("participantType", []);
+      setEducationType(null); // Reset education type as it's not applicable
+      form.setValue("educationType", undefined);
     }
-  }
+  };
 
   const handleEducationTypeChange = (value: "diploma" | "bachelors") => {
-    setEducationType(value)
-    form.setValue("educationType", value)
+    setEducationType(value);
+    form.setValue("educationType", value);
     // Reset round selection when education type changes
-    setSelectedRounds([])
-    form.setValue("rounds", [])
-  }
+    setSelectedRounds([]);
+    form.setValue("rounds", []);
+  };
 
   const handleParticipantTypeChange = (type: string) => {
     setParticipantTypes((prev) => {
-      const isSelected = prev.includes(type)
-      let updated: string[]
+      const isSelected = prev.includes(type);
+      let updated: string[];
 
       if (isSelected) {
         // Remove if already selected
-        updated = prev.filter((t) => t !== type)
+        updated = prev.filter((t) => t !== type);
       } else {
         // Add if not selected
-        updated = [...prev, type]
+        updated = [...prev, type];
       }
 
-      form.setValue("participantType", updated as ["inter", "intra"])
-      return updated
-    })
-  }
+      form.setValue("participantType", updated as ["inter", "intra"]);
+      return updated;
+    });
+  };
 
   const handleCsiMemberChange = (value: "yes" | "no") => {
-    setIsCsiMember(value)
-    form.setValue("isCsiMember", value)
-  }
+    setIsCsiMember(value);
+    form.setValue("isCsiMember", value);
+  };
 
   const handleYearChange = (value: string) => {
-    setYear(value)
-    form.setValue("year", value)
+    setYear(value);
+    form.setValue("year", value);
     // Reset round selection when year changes
-    setSelectedRounds([])
-    form.setValue("rounds", [])
-  }
+    setSelectedRounds([]);
+    form.setValue("rounds", []);
+  };
 
   const calculateTotalPrice = () => {
-    let totalCost = 0;
-    const isCSIMember = isCsiMember === "yes";
-  
-    // Calculate intra-college cost immediately when selected
-    if (participantTypes.includes("intra")) {
-      const intraPrice = isCSIMember ? 30 : 50;
-      totalCost += intraPrice;
-    }
-  
-    // Calculate inter-college cost only if rounds are selected
-    if (participantTypes.includes("inter")) {
-      if (selectedRounds.length > 0) {
-        // Updated price calculation for inter-college rounds
-        const pricePerRound = isFromSakec === "yes" 
-          ? 100  // Fixed price of 100 for SAKEC students regardless of CSI membership
-          : (isCSIMember ? 100 : 150);  // For non-SAKEC students
-        
-        totalCost += selectedRounds.length * pricePerRound;
-      } else {
-        // If inter is selected but no rounds are chosen, only show intra cost if applicable
-        totalCost = participantTypes.includes("intra") ? totalCost : 0;
+    let total = 0;
+    const isCSI = isCsiMember === "yes";
+
+    selectedRounds.forEach(() => {
+      if (participantTypes.includes("inter")) {
+        if (isFromSakec === "yes") {
+          total += isCSI ? 50 : 100;
+        } else {
+          total += 150;
+        }
       }
-    }
-  
-    setTotalPrice(totalCost);
+
+      if (participantTypes.includes("intra")) {
+        total += isCSI ? 50 : 100;
+      }
+    });
+
+    setTotalPrice(total);
   };
 
   // Update useEffect to recalculate price when participant types change
   useEffect(() => {
-    calculateTotalPrice()
-  }, [participantTypes, isCsiMember, selectedRounds, isFromSakec, calculateTotalPrice]) //Corrected useEffect dependencies
+    calculateTotalPrice();
+  }, [
+    participantTypes,
+    isCsiMember,
+    selectedRounds,
+    isFromSakec,
+    calculateTotalPrice,
+  ]); //Corrected useEffect dependencies
 
   const handleRoundSelection = (round: string) => {
     setSelectedRounds((prev) => {
-      const isSelected = prev.includes(round)
+      const isSelected = prev.includes(round);
 
       if (isSelected) {
         // Remove the round if already selected
-        const updated = prev.filter((r) => r !== round)
-        form.setValue("rounds", updated)
-        return updated
+        const updated = prev.filter((r) => r !== round);
+        form.setValue("rounds", updated);
+        return updated;
       } else {
         // Add the round if not selected
-        const updated = [...prev, round]
-        form.setValue("rounds", updated)
-        return updated
+        const updated = [...prev, round];
+        form.setValue("rounds", updated);
+        return updated;
       }
-    })
-  }
+    });
+  };
 
-  // Update the getAvailableRounds function
   const getAvailableRounds = () => {
-    if (isFromSakec === "yes") {
-      // For SAKEC students, use updated round names
-      return year === "FE" || year === "SE"
-        ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
-        : ["Advanced(round2)", "Open(round3)"]
-    } else if (isFromSakec === "no") {
-      if (educationType === "diploma") {
-        // All diploma students can access all rounds
-        return ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
-      } else if (educationType === "bachelors") {
-        // Bachelors year logic
-        return year === "FE" || year === "SE"
-          ? ["Rookie(round1)", "Advanced(round2)", "Open(round3)"]
-          : ["Advanced(round2)", "Open(round3)"]
-      }
+    // FY / SY logic
+    const isJunior =
+      year === "FE" ||
+      year === "SE" ||
+      year === "FY" ||
+      year === "SY" ||
+      educationType === "diploma";
+
+    if (isJunior) {
+      return ["Rookie(round1)", "Open(round2)"];
     }
-    return []
-  }
+
+    // TE / BE / TY etc.
+    return ["Open(round2)"];
+  };
 
   // Set default college name for SAKEC students
   useEffect(() => {
     if (isFromSakec === "yes") {
-      form.setValue("college", "Shah & Anchor Kutchhi Engineering College")
+      form.setValue("college", "Shah & Anchor Kutchhi Engineering College");
     } else if (isFromSakec === "no") {
-      form.setValue("college", "")
+      form.setValue("college", "");
     }
-  }, [isFromSakec, form])
+  }, [isFromSakec, form]);
 
   return (
     <div className={`min-h-screen`}>
@@ -627,12 +709,18 @@ export default function RegistrationForm() {
               {[1, 2, 3, 4].map((stepNumber) => (
                 <div
                   key={stepNumber}
-                  className={`flex flex-col items-center ${step >= stepNumber ? "text-primary" : "text-muted-foreground"
-                    }`}
+                  className={`flex flex-col items-center ${
+                    step >= stepNumber
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${step >= stepNumber ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      step >= stepNumber
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
                   >
                     {stepNumber}
                   </div>
@@ -647,14 +735,19 @@ export default function RegistrationForm() {
             </div>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 {step === 1 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
                       <h2 className="text-2xl font-bold text-foreground">
                         College Information <School className="inline ml-1" />
                       </h2>
-                      <p className="text-muted-foreground">Let's start with your college details</p>
+                      <p className="text-muted-foreground">
+                        Let's start with your college details
+                      </p>
                     </div>
 
                     <FormField
@@ -665,7 +758,9 @@ export default function RegistrationForm() {
                           <FormLabel>Are you from SAKEC College? 🏫</FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={(value: "yes" | "no") => handleSakecChange(value)}
+                              onValueChange={(value: "yes" | "no") =>
+                                handleSakecChange(value)
+                              }
                               defaultValue={field.value}
                               className="flex flex-col space-y-1"
                             >
@@ -673,13 +768,17 @@ export default function RegistrationForm() {
                                 <FormControl>
                                   <RadioGroupItem value="yes" />
                                 </FormControl>
-                                <FormLabel className="font-normal">Yes, I am from SAKEC College</FormLabel>
+                                <FormLabel className="font-normal">
+                                  Yes, I am from SAKEC College
+                                </FormLabel>
                               </FormItem>
                               <FormItem className="flex items-center space-x-3 space-y-0">
                                 <FormControl>
                                   <RadioGroupItem value="no" />
                                 </FormControl>
-                                <FormLabel className="font-normal">No, I am from another college</FormLabel>
+                                <FormLabel className="font-normal">
+                                  No, I am from another college
+                                </FormLabel>
                               </FormItem>
                             </RadioGroup>
                           </FormControl>
@@ -697,7 +796,9 @@ export default function RegistrationForm() {
                             <FormLabel>Education Type 🎓</FormLabel>
                             <FormControl>
                               <RadioGroup
-                                onValueChange={(value: "diploma" | "bachelors") => handleEducationTypeChange(value)}
+                                onValueChange={(
+                                  value: "diploma" | "bachelors",
+                                ) => handleEducationTypeChange(value)}
                                 defaultValue={field.value}
                                 className="flex flex-col space-y-1"
                               >
@@ -705,13 +806,17 @@ export default function RegistrationForm() {
                                   <FormControl>
                                     <RadioGroupItem value="diploma" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">Diploma</FormLabel>
+                                  <FormLabel className="font-normal">
+                                    Diploma
+                                  </FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                   <FormControl>
                                     <RadioGroupItem value="bachelors" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">Bachelors</FormLabel>
+                                  <FormLabel className="font-normal">
+                                    Bachelors
+                                  </FormLabel>
                                 </FormItem>
                               </RadioGroup>
                             </FormControl>
@@ -734,7 +839,9 @@ export default function RegistrationForm() {
                                   <Checkbox
                                     id="inter"
                                     checked={participantTypes.includes("inter")}
-                                    onCheckedChange={() => handleParticipantTypeChange("inter")}
+                                    onCheckedChange={() =>
+                                      handleParticipantTypeChange("inter")
+                                    }
                                   />
                                   <label
                                     htmlFor="inter"
@@ -747,7 +854,9 @@ export default function RegistrationForm() {
                                   <Checkbox
                                     id="intra"
                                     checked={participantTypes.includes("intra")}
-                                    onCheckedChange={() => handleParticipantTypeChange("intra")}
+                                    onCheckedChange={() =>
+                                      handleParticipantTypeChange("intra")
+                                    }
                                   />
                                   <label
                                     htmlFor="intra"
@@ -759,7 +868,8 @@ export default function RegistrationForm() {
                               </div>
                             </FormControl>
                             <FormDescription>
-                              You can select both options if you wish to participate in both.
+                              You can select both options if you wish to
+                              participate in both.
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -768,8 +878,16 @@ export default function RegistrationForm() {
                     )}
 
                     <div className="pt-4 flex justify-end">
-                      <Button type="button" onClick={nextStep} disabled={isLoading}>
-                        {isLoading ? <span className="mr-2">Loading...</span> : "Next Step"}
+                      <Button
+                        type="button"
+                        onClick={nextStep}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="mr-2">Loading...</span>
+                        ) : (
+                          "Next Step"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -781,7 +899,9 @@ export default function RegistrationForm() {
                       <h2 className="text-2xl font-bold text-foreground">
                         Personal Details <User className="inline ml-1" />
                       </h2>
-                      <p className="text-muted-foreground">Tell us about yourself</p>
+                      <p className="text-muted-foreground">
+                        Tell us about yourself
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -792,7 +912,10 @@ export default function RegistrationForm() {
                           <FormItem>
                             <FormLabel>Full Name 👤</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your full name" {...field} />
+                              <Input
+                                placeholder="Enter your full name"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -806,7 +929,11 @@ export default function RegistrationForm() {
                           <FormItem>
                             <FormLabel>Email Address 📧</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="your.email@example.com" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="your.email@example.com"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -820,7 +947,10 @@ export default function RegistrationForm() {
                           <FormItem>
                             <FormLabel>Phone Number 📱</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your phone number" {...field} />
+                              <Input
+                                placeholder="Enter your phone number"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -835,7 +965,10 @@ export default function RegistrationForm() {
                             <FormItem>
                               <FormLabel>PRN Number 🔢</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter your PRN number" {...field} />
+                                <Input
+                                  placeholder="Enter your PRN number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -867,7 +1000,10 @@ export default function RegistrationForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Year of Study 📚</FormLabel>
-                            <Select onValueChange={(value) => handleYearChange(value)} defaultValue={field.value}>
+                            <Select
+                              onValueChange={(value) => handleYearChange(value)}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select your year" />
@@ -877,17 +1013,31 @@ export default function RegistrationForm() {
                                 {educationType === "diploma" ? (
                                   // For diploma, show 3 years
                                   <>
-                                    <SelectItem value="FY">First Year</SelectItem>
-                                    <SelectItem value="SY">Second Year</SelectItem>
-                                    <SelectItem value="TY">Third Year</SelectItem>
+                                    <SelectItem value="FY">
+                                      First Year
+                                    </SelectItem>
+                                    <SelectItem value="SY">
+                                      Second Year
+                                    </SelectItem>
+                                    <SelectItem value="TY">
+                                      Third Year
+                                    </SelectItem>
                                   </>
                                 ) : (
                                   // For bachelors or SAKEC students, show 4 years
                                   <>
-                                    <SelectItem value="FE">First Year (FE)</SelectItem>
-                                    <SelectItem value="SE">Second Year (SE)</SelectItem>
-                                    <SelectItem value="TE">Third Year (TE)</SelectItem>
-                                    <SelectItem value="BE">Final Year (BE)</SelectItem>
+                                    <SelectItem value="FE">
+                                      First Year (FE)
+                                    </SelectItem>
+                                    <SelectItem value="SE">
+                                      Second Year (SE)
+                                    </SelectItem>
+                                    <SelectItem value="TE">
+                                      Third Year (TE)
+                                    </SelectItem>
+                                    <SelectItem value="BE">
+                                      Final Year (BE)
+                                    </SelectItem>
                                   </>
                                 )}
                               </SelectContent>
@@ -903,19 +1053,34 @@ export default function RegistrationForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Branch 🔍</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select your branch" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="COMPS">Computer Engineering</SelectItem>
-                                <SelectItem value="IT">Information Technology</SelectItem>
-                                <SelectItem value="EXTC">Electronics & Telecommunication</SelectItem>
-                                <SelectItem value="ETRX">Electronics</SelectItem>
-                                <SelectItem value="AI&DS">AI & Data Science</SelectItem>
-                                <SelectItem value="AI&ML">AI & Machine Learning</SelectItem>
+                                <SelectItem value="COMPS">
+                                  Computer Engineering
+                                </SelectItem>
+                                <SelectItem value="IT">
+                                  Information Technology
+                                </SelectItem>
+                                <SelectItem value="EXTC">
+                                  Electronics & Telecommunication
+                                </SelectItem>
+                                <SelectItem value="ETRX">
+                                  Electronics
+                                </SelectItem>
+                                <SelectItem value="AI&DS">
+                                  AI & Data Science
+                                </SelectItem>
+                                <SelectItem value="AI&ML">
+                                  AI & Machine Learning
+                                </SelectItem>
                                 <SelectItem value="OTHER">Other</SelectItem>
                               </SelectContent>
                             </Select>
@@ -932,7 +1097,10 @@ export default function RegistrationForm() {
                             <FormItem>
                               <FormLabel>Specify Branch 🔍</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter your branch name" {...field} />
+                                <Input
+                                  placeholder="Enter your branch name"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -942,11 +1110,23 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="pt-4 flex justify-between">
-                      <Button type="button" variant="outline" onClick={prevStep}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={prevStep}
+                      >
                         Previous
                       </Button>
-                      <Button type="button" onClick={nextStep} disabled={isLoading}>
-                        {isLoading ? <span className="mr-2">Loading...</span> : "Next Step"}
+                      <Button
+                        type="button"
+                        onClick={nextStep}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="mr-2">Loading...</span>
+                        ) : (
+                          "Next Step"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -955,8 +1135,12 @@ export default function RegistrationForm() {
                 {step === 3 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
-                      <h2 className="text-2xl font-bold text-foreground">Membership & Round Selection 🎯</h2>
-                      <p className="text-muted-foreground">Select rounds and provide your membership details</p>
+                      <h2 className="text-2xl font-bold text-foreground">
+                        Membership & Round Selection 🎯
+                      </h2>
+                      <p className="text-muted-foreground">
+                        Select rounds and provide your membership details
+                      </p>
                     </div>
 
                     {isFromSakec === "yes" && (
@@ -965,10 +1149,14 @@ export default function RegistrationForm() {
                         name="isCsiMember"
                         render={({ field }) => (
                           <FormItem className="space-y-3">
-                            <FormLabel>Are you a CSI SAKEC member? 🎖️</FormLabel>
+                            <FormLabel>
+                              Are you a CSI SAKEC member? 🎖️
+                            </FormLabel>
                             <FormControl>
                               <RadioGroup
-                                onValueChange={(value: "yes" | "no") => handleCsiMemberChange(value)}
+                                onValueChange={(value: "yes" | "no") =>
+                                  handleCsiMemberChange(value)
+                                }
                                 defaultValue={field.value}
                                 className="flex flex-col space-y-1"
                               >
@@ -976,13 +1164,17 @@ export default function RegistrationForm() {
                                   <FormControl>
                                     <RadioGroupItem value="yes" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">Yes, I am a CSI SAKEC member</FormLabel>
+                                  <FormLabel className="font-normal">
+                                    Yes, I am a CSI SAKEC member
+                                  </FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                   <FormControl>
                                     <RadioGroupItem value="no" />
                                   </FormControl>
-                                  <FormLabel className="font-normal">No, I am not a CSI SAKEC member</FormLabel>
+                                  <FormLabel className="font-normal">
+                                    No, I am not a CSI SAKEC member
+                                  </FormLabel>
                                 </FormItem>
                               </RadioGroup>
                             </FormControl>
@@ -994,24 +1186,53 @@ export default function RegistrationForm() {
 
                     {/* Show intra-college section if intra is selected */}
                     {participantTypes.includes("intra") && (
-                      <div className="bg-green-50  p-4 rounded-lg border border-green-200  mb-6">
-                        <div className="flex items-center text-green-800  mb-2">
-                          <CheckCircle2 className="w-5 h-5 mr-2" />
-                          <h3 className="font-semibold">Intra-College Participation</h3>
-                        </div>
-                        <p className="text-green-700 0">
-                          For intra-college participants, there is only one round available. You are automatically
-                          registered for this round.
-                        </p>
-                        <div className="mt-4 p-3 bg-white  rounded-md border border-green-200 ">
-                          <p className="font-medium text-green-800 ">
-                            Registration Fee: ₹{isCsiMember === "yes" ? "30" : "50"}
-                          </p>
-                          <p className="text-sm text-green-700 ">
-                            {isCsiMember === "yes" ? "CSI Member Price" : "Non-CSI Member Price"}
-                          </p>
-                        </div>
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name="rounds"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>
+                              Select Intra-College Round(s) 🎯
+                            </FormLabel>
+
+                            <div className="space-y-3">
+                              {getAvailableRounds().includes(
+                                "Rookie(round1)",
+                              ) && (
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    checked={selectedRounds.includes(
+                                      "Rookie(round1)",
+                                    )}
+                                    onCheckedChange={() =>
+                                      handleRoundSelection("Rookie(round1)")
+                                    }
+                                  />
+                                  <label>Rookie (Round 1)</label>
+                                </div>
+                              )}
+
+                              {getAvailableRounds().includes(
+                                "Open(round2)",
+                              ) && (
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    checked={selectedRounds.includes(
+                                      "Open(round2)",
+                                    )}
+                                    onCheckedChange={() =>
+                                      handleRoundSelection("Open(round2)")
+                                    }
+                                  />
+                                  <label>Open (Round 2)</label>
+                                </div>
+                              )}
+                            </div>
+
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
 
                     {/* Show inter-college section if inter is selected AND it's not a SAKEC student with only intra selected */}
@@ -1027,14 +1248,22 @@ export default function RegistrationForm() {
                             name="rounds"
                             render={() => (
                               <FormItem>
-                                <FormLabel>Select Inter-College Round(s) 🔄</FormLabel>
+                                <FormLabel>
+                                  Select Inter-College Round(s) 🔄
+                                </FormLabel>
                                 <div className="space-y-3">
-                                  {getAvailableRounds().includes("Rookie(round1)") && (
+                                  {getAvailableRounds().includes(
+                                    "Rookie(round1)",
+                                  ) && (
                                     <div className="flex items-center space-x-2">
                                       <Checkbox
                                         id="round1"
-                                        checked={selectedRounds.includes("Rookie(round1)")}
-                                        onCheckedChange={() => handleRoundSelection("Rookie(round1)")}
+                                        checked={selectedRounds.includes(
+                                          "Rookie(round1)",
+                                        )}
+                                        onCheckedChange={() =>
+                                          handleRoundSelection("Rookie(round1)")
+                                        }
                                       />
                                       <label
                                         htmlFor="round1"
@@ -1044,33 +1273,24 @@ export default function RegistrationForm() {
                                       </label>
                                     </div>
                                   )}
-                                  {getAvailableRounds().includes("Advanced(round2)") && (
+                                  {getAvailableRounds().includes(
+                                    "Open(round2)",
+                                  ) && (
                                     <div className="flex items-center space-x-2">
                                       <Checkbox
                                         id="round2"
-                                        checked={selectedRounds.includes("Advanced(round2)")}
-                                        onCheckedChange={() => handleRoundSelection("Advanced(round2)")}
+                                        checked={selectedRounds.includes(
+                                          "Open(round2)",
+                                        )}
+                                        onCheckedChange={() =>
+                                          handleRoundSelection("Open(round2)")
+                                        }
                                       />
                                       <label
                                         htmlFor="round2"
                                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                       >
-                                        Advanced (Round 2)
-                                      </label>
-                                    </div>
-                                  )}
-                                  {getAvailableRounds().includes("Open(round3)") && (
-                                    <div className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id="round3"
-                                        checked={selectedRounds.includes("Open(round3)")}
-                                        onCheckedChange={() => handleRoundSelection("Open(round3)")}
-                                      />
-                                      <label
-                                        htmlFor="round3"
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                      >
-                                        Open (Round 3)
+                                        Open (Round 2)
                                       </label>
                                     </div>
                                   )}
@@ -1080,7 +1300,8 @@ export default function RegistrationForm() {
                                     ? year === "FE" || year === "SE"
                                       ? "First and Second year students can choose any of the rounds"
                                       : "Third and Final year students can choose from rounds 2 or 3 only"
-                                    : educationType === "bachelors" && (year === "TE" || year === "BE")
+                                    : educationType === "bachelors" &&
+                                        (year === "TE" || year === "BE")
                                       ? "Third and Final year bachelor's students can choose from rounds 2 or 4 only"
                                       : "You can choose from the available rounds"}
                                 </FormDescription>
@@ -1090,37 +1311,68 @@ export default function RegistrationForm() {
                           />
 
                           <div className="mt-4 p-4 bg-blue-50  rounded-md border border-blue-200 ">
-                            <h3 className="font-semibold text-blue-800  mb-2">Inter-College Price Calculation</h3>
+                            <h3 className="font-semibold text-blue-800  mb-2">
+                              Inter-College Price Calculation
+                            </h3>
                             <p className="text-blue-700  mb-2">
-                              <span className="font-medium">Price per round:</span> ₹
-                              {isFromSakec === "yes" ? "100" : (isCsiMember ? "100" : "150")}
+                              <span className="font-medium">
+                                Price per round:
+                              </span>{" "}
+                              ₹
+                              {isFromSakec === "yes"
+                                ? "100"
+                                : isCsiMember
+                                  ? "50"
+                                  : "150"}
                               <span className="text-sm ml-2">
                                 {isFromSakec === "yes"
                                   ? "(Fixed Price for SAKEC students)"
-                                  : (isCsiMember ? "(CSI Member Price)" : "(Standard Price)")}
+                                  : isCsiMember
+                                    ? "(CSI Member Price)"
+                                    : "(Standard Price)"}
                               </span>
                             </p>
                             <p className="text-blue-700  mb-2">
-                              <span className="font-medium">Selected rounds:</span> {selectedRounds.length}
+                              <span className="font-medium">
+                                Selected rounds:
+                              </span>{" "}
+                              {selectedRounds.length}
                             </p>
                           </div>
                         </div>
                       )}
 
                     {/* Show total price calculation if any participant type is selected */}
-                    {(participantTypes.includes("inter") || participantTypes.includes("intra")) && (
+                    {(participantTypes.includes("inter") ||
+                      participantTypes.includes("intra")) && (
                       <div className="mt-4 p-4 bg-purple-50  rounded-md border border-purple-200 ">
-                        <h3 className="font-semibold text-purple-800  mb-2">Total Registration Cost</h3>
-                        <p className="text-lg font-bold text-purple-800 ">Total Amount: ₹{totalPrice}</p>
+                        <h3 className="font-semibold text-purple-800  mb-2">
+                          Total Registration Cost
+                        </h3>
+                        <p className="text-lg font-bold text-purple-800 ">
+                          Total Amount: ₹{totalPrice}
+                        </p>
                       </div>
                     )}
 
                     <div className="pt-4 flex justify-between">
-                      <Button type="button" variant="outline" onClick={prevStep}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={prevStep}
+                      >
                         Previous
                       </Button>
-                      <Button type="button" onClick={nextStep} disabled={isLoading}>
-                        {isLoading ? <span className="mr-2">Loading...</span> : "Next Step"}
+                      <Button
+                        type="button"
+                        onClick={nextStep}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="mr-2">Loading...</span>
+                        ) : (
+                          "Next Step"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -1132,39 +1384,53 @@ export default function RegistrationForm() {
                       <h2 className="text-2xl font-bold text-foreground">
                         Payment Details <CreditCard className="inline ml-1" />
                       </h2>
-                      <p className="text-muted-foreground">Make payment and upload proof</p>
+                      <p className="text-muted-foreground">
+                        Make payment and upload proof
+                      </p>
                     </div>
 
                     <div className="bg-blue-50  p-4 rounded-lg border border-blue-200  mb-6">
                       <h3 className="font-semibold flex items-center text-blue-800  mb-2">
-                        <AlertCircle className="w-5 h-5 mr-2" /> Payment Information
+                        <AlertCircle className="w-5 h-5 mr-2" /> Payment
+                        Information
                       </h3>
 
                       {/* Final amount display at the top */}
                       <div className="p-4 bg-white  rounded-lg border border-blue-200   mb-4">
-                        <h4 className="font-semibold text-blue-800    mb-2">Amount to Pay</h4>
-                        <p className="text-2xl font-bold text-blue-800   ">₹{totalPrice}</p>
+                        <h4 className="font-semibold text-blue-800    mb-2">
+                          Amount to Pay
+                        </h4>
+                        <p className="text-2xl font-bold text-blue-800   ">
+                          ₹{totalPrice}
+                        </p>
                         <p className="text-sm text-blue-700     mt-2">
-                          <strong>Note:</strong> Please include your name and email in the payment reference.
+                          <strong>Note:</strong> Please include your name and
+                          email in the payment reference.
                         </p>
                       </div>
 
                       <div className="p-4 bg-white  rounded-lg border border-blue-200   mb-4">
-                        <h4 className="font-semibold text-blue-800    mb-2">Bank Transfer Details</h4>
+                        <h4 className="font-semibold text-blue-800    mb-2">
+                          Bank Transfer Details
+                        </h4>
                         <p className="text-blue-700     mb-1">
-                          <span className="font-medium">Account Name:</span> CSI SAKE
+                          <span className="font-medium">Account Name:</span> CSI
+                          SAKE
                         </p>
                         <p className="text-blue-700     mb-1">
-                          <span className="font-medium">Account Number:</span> 8678101300391
+                          <span className="font-medium">Account Number:</span>{" "}
+                          8678101300391
                         </p>
                         <p className="text-blue-700     mb-1">
-                          <span className="font-medium">IFSC Code:</span> CNRB0000105
+                          <span className="font-medium">IFSC Code:</span>{" "}
+                          CNRB0000105
                         </p>
                         <p className="text-blue-700     mb-1">
                           <span className="font-medium">Bank:</span> Canara Bank
                         </p>
                         <p className="text-blue-700    ">
-                          <span className="font-medium">Branch:</span> MUMBAI CHEMBUR MAIN
+                          <span className="font-medium">Branch:</span> MUMBAI
+                          CHEMBUR MAIN
                         </p>
                       </div>
                     </div>
@@ -1177,7 +1443,10 @@ export default function RegistrationForm() {
                           <FormItem>
                             <FormLabel>Transaction ID 👤</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your Transaction ID" {...field} />
+                              <Input
+                                placeholder="Enter your Transaction ID"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1198,16 +1467,20 @@ export default function RegistrationForm() {
                                   if (!file) return;
 
                                   // Check file type
-                                  if (!file.type.startsWith('image/')) {
-                                    toast.error('Please upload only image files (PNG, JPG, JPEG)');
-                                    e.target.value = '';
+                                  if (!file.type.startsWith("image/")) {
+                                    toast.error(
+                                      "Please upload only image files (PNG, JPG, JPEG)",
+                                    );
+                                    e.target.value = "";
                                     return;
                                   }
 
                                   // Check file size (5MB limit before compression)
                                   if (file.size > 5 * 1024 * 1024) {
-                                    toast.error('File size should be less than 5MB');
-                                    e.target.value = '';
+                                    toast.error(
+                                      "File size should be less than 5MB",
+                                    );
+                                    e.target.value = "";
                                     return;
                                   }
 
@@ -1216,7 +1489,10 @@ export default function RegistrationForm() {
                                 className="cursor-pointer"
                               />
                             </FormControl>
-                            <FormDescription>Upload a screenshot of your payment confirmation (PNG, JPG only)</FormDescription>
+                            <FormDescription>
+                              Upload a screenshot of your payment confirmation
+                              (PNG, JPG only)
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1228,7 +1504,9 @@ export default function RegistrationForm() {
                           name="csiProof"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Upload CSI SAKEC Membership Proof 🆔</FormLabel>
+                              <FormLabel>
+                                Upload CSI SAKEC Membership Proof 🆔
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type="file"
@@ -1238,16 +1516,20 @@ export default function RegistrationForm() {
                                     if (!file) return;
 
                                     // Check file type
-                                    if (!file.type.startsWith('image/')) {
-                                      toast.error('Please upload only image files (PNG, JPG, JPEG)');
-                                      e.target.value = '';
+                                    if (!file.type.startsWith("image/")) {
+                                      toast.error(
+                                        "Please upload only image files (PNG, JPG, JPEG)",
+                                      );
+                                      e.target.value = "";
                                       return;
                                     }
 
                                     // Check file size (5MB limit before compression)
                                     if (file.size > 5 * 1024 * 1024) {
-                                      toast.error('File size should be less than 5MB');
-                                      e.target.value = '';
+                                      toast.error(
+                                        "File size should be less than 5MB",
+                                      );
+                                      e.target.value = "";
                                       return;
                                     }
 
@@ -1256,7 +1538,10 @@ export default function RegistrationForm() {
                                   className="cursor-pointer"
                                 />
                               </FormControl>
-                              <FormDescription>Upload a screenshot of your CSI SAKEC membership card (PNG, JPG only)</FormDescription>
+                              <FormDescription>
+                                Upload a screenshot of your CSI SAKEC membership
+                                card (PNG, JPG only)
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -1265,11 +1550,19 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="pt-4 flex justify-between">
-                      <Button type="button" variant="outline" onClick={prevStep}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={prevStep}
+                      >
                         Previous
                       </Button>
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <span className="mr-2">Submitting...</span> : "Submit Registration"}
+                        {isLoading ? (
+                          <span className="mr-2">Submitting...</span>
+                        ) : (
+                          "Submit Registration"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -1277,11 +1570,13 @@ export default function RegistrationForm() {
               </form>
             </Form>
           </CardContent>
-          <SuccessModal open={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
+          <SuccessModal
+            open={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+          />
           <Toaster />
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
