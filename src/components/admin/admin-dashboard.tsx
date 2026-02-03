@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                 Dear ${participant.personalInfo.name},
               </p>
               <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                Congratulations! Your registration for CSI-SAKEC CALL OF DUTY - SEASON 4 has been approved.
+                Congratulations! Your registration for CSI-SAKEC CALL OF DUTY - SEASON 5 has been approved.
               </p>
               <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <h3 style="color: #28a745; font-size: 16px; margin-bottom: 10px;">Next Steps:</h3>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
                 Dear ${participant.personalInfo.name},
               </p>
               <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
-                We regret to inform you that your registration for CSI-SAKEC CALL OF DUTY - SEASON 4 has been rejected.
+                We regret to inform you that your registration for CSI-SAKEC CALL OF DUTY - SEASON 5 has been rejected.
               </p>
               <div style="background-color: #fdf3f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <p style="margin: 0; color: #dc3545;">
