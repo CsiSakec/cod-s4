@@ -287,7 +287,7 @@ function Card3D({
   index: number;
   delay: number;
 }) {
-  const cardRef = useRef(null);
+  // const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -297,7 +297,11 @@ function Card3D({
     return () => clearTimeout(timer);
   }, [delay]);
 
-  const handleMouseMove = (e: any) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+
     const rect = cardRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
