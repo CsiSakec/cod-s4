@@ -18,11 +18,6 @@ const teamData = {
         role: "GENERAL COORDINATOR",
         imageSrc: "/team/aryaan gala GC.png",
       },
-      {
-        name: "VANSHIKA BEDMUTHA",
-        role: "STUDENT COORDINATOR",
-        imageSrc: "/team/vanshika.webp",
-      },
     ],
   },
   eventsTeam: {

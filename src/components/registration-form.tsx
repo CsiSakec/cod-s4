@@ -308,7 +308,7 @@ export default function RegistrationForm() {
       try {
         const emailData = {
           to: values.email,
-          subject: "CSI-SAKEC COD4 Registration Confirmation",
+          subject: "CSI-SAKEC COD5 Registration Confirmation",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">

@@ -279,7 +279,7 @@ export function Rules() {
                       Rookie Round
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      March 27, 2026 10:30am to 11:30am
+                      Feb 18, 2026 10:30am to 11:45am
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
@@ -287,15 +287,23 @@ export function Rules() {
                       Open Round
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      March 27, 2026 01:30pm to 02:30pm
+                      Feb 18, 2026 12:00pm to 01:15pm
+                    </p>
+                  </div>
+                  <div className="schedule-card rounded-lg p-4">
+                    <h3 className="font-medium mb-2 text-[#a78bfa]">
+                      Intra Rookie
+                    </h3>
+                    <p style={{ color: "rgba(190,190,220,0.8)" }}>
+                      Feb 18, 2026 01:45pm to 03:00pm
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4 md:col-span-2">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
-                      Intra Round
+                      Intra Open
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      March 27, 2026 03:00pm to 04:00pm
+                      Feb 18, 2026 03:15pm to 04:30pm
                     </p>
                   </div>
                 </div>
