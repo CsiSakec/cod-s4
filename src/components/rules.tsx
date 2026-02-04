@@ -266,7 +266,7 @@ export function Rules() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="schedule-card rounded-lg p-4">
+                  <div className="schedule-card rounded-lg p-4 md:col-span-2">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
                       Registration Period
                     </h3>
@@ -298,7 +298,7 @@ export function Rules() {
                       Feb 18, 2026 01:45pm to 03:00pm
                     </p>
                   </div>
-                  <div className="schedule-card rounded-lg p-4 md:col-span-2">
+                  <div className="schedule-card rounded-lg p-4">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
                       Intra Open
                     </h3>
@@ -528,12 +528,6 @@ export function Rules() {
                             Rookie:
                           </span>{" "}
                           (Diploma, 1st & 2nd Year students.)
-                        </li>
-                        <li>
-                          <span className="font-semibold text-[#a78bfa]">
-                            Advanced:
-                          </span>{" "}
-                          (3rd & 4th year students.)
                         </li>
                         <li>
                           <span className="font-semibold text-[#a78bfa]">
