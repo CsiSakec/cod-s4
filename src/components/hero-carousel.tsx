@@ -8,25 +8,25 @@ import { Button } from "@/components/ui/button";
 const slides = [
   {
     id: 1,
-    image: "/banner.png",
-    title: "Welcome to COD Tournament",
-    description: "Join the biggest gaming event of the year",
-  },
-  {
-    id: 2,
     image: "/events.png",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
   {
-    id: 3,
+    id: 2,
     image: "/banner2.png",
     title: "Register Now",
     description: "Limited spots available. Don't miss out!",
   },
   {
+    id: 3,
+    image: "/banner4.jpg",
+    title: "Register Now",
+    description: "Limited spots available. Don't miss out!",
+  },
+  {
     id: 4,
-    image: "/team.png",
+    image: "/banner5.jpg",
     title: "Register Now",
     description: "Limited spots available. Don't miss out!",
   },
