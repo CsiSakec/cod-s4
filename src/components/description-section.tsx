@@ -151,7 +151,7 @@ export default function DescriptionSection() {
                 >
                   <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[400px] rounded-lg overflow-hidden">
                     <Image
-                      src="/banner.png"
+                      src="/CODS5.jpeg"
                       alt="Code off Duty - SEASON 5"
                       fill
                       className="object-cover"

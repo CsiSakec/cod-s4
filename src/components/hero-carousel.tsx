@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 const slides = [
   {
     id: 1,
-    image: "/events.png",
+    image: "/banner.png",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
@@ -29,6 +29,12 @@ const slides = [
     image: "/banner5.jpg",
     title: "Register Now",
     description: "Limited spots available. Don't miss out!",
+  },
+  {
+    id: 5,
+    image: "/events.png",
+    title: "Compete with the Best",
+    description: "Show your skills and win amazing prizes",
   },
 ];
 
