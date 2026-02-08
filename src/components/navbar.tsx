@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -16,6 +17,12 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
+
+  // Hide navbar on admin pages
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -44,10 +51,10 @@ export default function Navbar() {
           position: "sticky",
           top: 0,
           zIndex: 100,
-          background: scrolled ? "rgba(10,10,20,0.82)" : "rgba(10,10,20,0.6)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          borderBottom: "1px solid rgba(124,92,252,0.18)",
+          background: "#0a0a14",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          borderBottom: "1px solid rgba(124,92,252,0.5)",
           transition: "background 0.4s ease, border-color 0.4s ease",
           fontFamily: "'Segoe UI', system-ui, sans-serif",
           overflow: "hidden",
@@ -74,7 +81,7 @@ export default function Navbar() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 1,
+            height: 2,
             overflow: "hidden",
             pointerEvents: "none",
           }}
@@ -84,7 +91,7 @@ export default function Navbar() {
               position: "absolute",
               inset: 0,
               background:
-                "linear-gradient(90deg, transparent 0%, rgba(167,139,250,0.55) 50%, transparent 100%)",
+                "linear-gradient(90deg, transparent 0%, #a78bfa 50%, transparent 100%)",
               animation: "lineSweep 3.5s linear infinite",
             }}
           />
@@ -114,7 +121,6 @@ export default function Navbar() {
             zIndex: 1,
             maxWidth: 1200,
             margin: "0 auto",
-            padding: "0 20px",
             height: 68,
             display: "flex",
             alignItems: "center",
