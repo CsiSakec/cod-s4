@@ -117,7 +117,7 @@ export default function HeroCarousel() {
                 src={slide.image || "/placeholder.svg"}
                 alt={slide.title}
                 fill
-                className="object-cover"
+                className="object-cover object-top"
                 priority={index === 0}
               />
               {/* Vignette effect */}
