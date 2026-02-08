@@ -48,6 +48,7 @@ import {
   Search,
   X,
   Camera,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateQRToken, generateQRCodeDataURL } from "@/lib/qr-utils";
@@ -96,6 +97,8 @@ export default function AdminDashboard() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isProofDialogOpen, setIsProofDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const getParticipantTypeCounts = (registrations: Registration[]) => {
     return {
@@ -301,6 +304,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteRegistration = async (id: string) => {
+    setIsDeleting(true);
     try {
       const registrationRef = ref(database, `registrations/${id}`);
       await remove(registrationRef);
@@ -309,12 +313,15 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error("Failed to delete registration");
       console.error("Error deleting registration:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleEditRegistration = async () => {
     if (!selectedRegistration) return;
 
+    setIsUpdating(true);
     try {
       const registrationRef = ref(
         database,
@@ -326,6 +333,8 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error("Failed to update registration");
       console.error("Error updating registration:", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -993,10 +1002,20 @@ export default function AdminDashboard() {
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
+              disabled={isUpdating}
             >
               Cancel
             </Button>
-            <Button onClick={handleEditRegistration}>Save Changes</Button>
+            <Button onClick={handleEditRegistration} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1024,8 +1043,16 @@ export default function AdminDashboard() {
                 selectedRegistration &&
                 handleDeleteRegistration(selectedRegistration.id)
               }
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

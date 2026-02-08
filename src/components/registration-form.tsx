@@ -31,6 +31,7 @@ import {
   School,
   User,
   CreditCard,
+  Loader2,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -887,7 +888,10 @@ export default function RegistrationForm() {
                       className="bg-gradient-to-r from-[#7c5cfc] to-[#a78bfa] hover:from-[#6b4ce0] hover:to-[#9570e8]"
                     >
                       {isLoading ? (
-                        <span className="mr-2">Loading...</span>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
                       ) : (
                         "Next Step"
                       )}
@@ -1132,7 +1136,7 @@ export default function RegistrationForm() {
                       type="button"
                       variant="outline"
                       onClick={prevStep}
-                      className="border-[rgba(124,92,252,0.4)] text-[rgba(220,220,240,0.9)] hover:bg-[rgba(124,92,252,0.1)]"
+                      className="bg-[rgba(30,30,45,0.5)] border-[rgba(124,92,252,0.5)] text-white hover:bg-[rgba(124,92,252,0.2)] hover:text-white"
                     >
                       Previous
                     </Button>
@@ -1143,7 +1147,10 @@ export default function RegistrationForm() {
                       className="bg-gradient-to-r from-[#7c5cfc] to-[#a78bfa] hover:from-[#6b4ce0] hover:to-[#9570e8]"
                     >
                       {isLoading ? (
-                        <span className="mr-2">Loading...</span>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
                       ) : (
                         "Next Step"
                       )}
@@ -1389,7 +1396,7 @@ export default function RegistrationForm() {
                       type="button"
                       variant="outline"
                       onClick={prevStep}
-                      className="border-[rgba(124,92,252,0.4)] text-[rgba(220,220,240,0.9)] hover:bg-[rgba(124,92,252,0.1)]"
+                      className="bg-[rgba(30,30,45,0.5)] border-[rgba(124,92,252,0.5)] text-white hover:bg-[rgba(124,92,252,0.2)] hover:text-white"
                     >
                       Previous
                     </Button>
@@ -1400,7 +1407,10 @@ export default function RegistrationForm() {
                       className="bg-gradient-to-r from-[#7c5cfc] to-[#a78bfa] hover:from-[#6b4ce0] hover:to-[#9570e8]"
                     >
                       {isLoading ? (
-                        <span className="mr-2">Loading...</span>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
                       ) : (
                         "Next Step"
                       )}
@@ -1586,7 +1596,7 @@ export default function RegistrationForm() {
                       type="button"
                       variant="outline"
                       onClick={prevStep}
-                      className="border-[rgba(124,92,252,0.4)] text-[rgba(220,220,240,0.9)] hover:bg-[rgba(124,92,252,0.1)]"
+                      className="bg-[rgba(30,30,45,0.5)] border-[rgba(124,92,252,0.5)] text-white hover:bg-[rgba(124,92,252,0.2)] hover:text-white"
                     >
                       Previous
                     </Button>
@@ -1596,7 +1606,10 @@ export default function RegistrationForm() {
                       className="bg-gradient-to-r from-[#7c5cfc] to-[#a78bfa] hover:from-[#6b4ce0] hover:to-[#9570e8]"
                     >
                       {isLoading ? (
-                        <span className="mr-2">Submitting...</span>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
                       ) : (
                         "Submit Registration"
                       )}
