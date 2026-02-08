@@ -47,8 +47,10 @@ import {
   Eye,
   Search,
   X,
+  Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { generateQRToken, generateQRCodeDataURL } from "@/lib/qr-utils";
 
 // Update the Registration interface to match the new schema
 interface Registration {
@@ -77,6 +79,7 @@ interface Registration {
   };
   status: "pending" | "approved" | "rejected";
   arrived: "yes" | "no";
+  qrToken?: string;
   createdAt: string;
 }
 
@@ -169,7 +172,20 @@ export default function AdminDashboard() {
   ) => {
     try {
       const participantRef = ref(database, `registrations/${participantId}`);
-      await update(participantRef, { status: newStatus });
+      
+      let qrToken = "";
+      let qrCodeDataURL = "";
+
+      if (newStatus === "approved") {
+        qrToken = generateQRToken();
+        qrCodeDataURL = await generateQRCodeDataURL(qrToken);
+        await update(participantRef, { 
+          status: newStatus,
+          qrToken: qrToken
+        });
+      } else {
+        await update(participantRef, { status: newStatus });
+      }
 
       // Get participant data
       const participantSnapshot = await get(participantRef);
@@ -184,6 +200,7 @@ export default function AdminDashboard() {
       const emailData = {
         to: participant.personalInfo.email,
         subject: `CSI-COD Registration ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+        qrCodeBase64: qrCodeDataURL, // Pass the QR code data URL
         html:
           newStatus === "approved"
             ? `
@@ -196,10 +213,24 @@ export default function AdminDashboard() {
               <p style="font-size: 16px; color: #202124; margin-bottom: 15px;">
                 Congratulations! Your registration for CSI-SAKEC CALL OF DUTY - SEASON 5 has been approved.
               </p>
+              
+              <div style="background-color: #e8f5e9; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+                <h3 style="color: #28a745; font-size: 18px; margin-bottom: 15px;">Your Event QR Code</h3>
+                <p style="font-size: 14px; color: #5f6368; margin-bottom: 15px;">
+                  Show this QR code at the venue for instant check-in
+                </p>
+                  <!-- This src="cid:qr-code" is CRITICAL. It tells the email client to look for the attached image with content-id 'qr-code' -->
+                  <img src="cid:qr-code" alt="QR Code" style="max-width: 250px; margin: 0 auto; display: block;" />
+                <p style="font-size: 12px; color: #5f6368; margin-top: 10px;">
+                  Save this QR code or bring it on your phone
+                </p>
+              </div>
+
               <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <h3 style="color: #28a745; font-size: 16px; margin-bottom: 10px;">Next Steps:</h3>
                 <ul style="margin: 0; padding-left: 20px;">
                   <li>Join our Whatsapp group for further updates</li>
+                  <li>Save the QR code above for event check-in</li>
                   <li>Check your email regularly for event details</li>
                   <li>Get ready for the competition!</li>
                 </ul>
@@ -440,6 +471,14 @@ export default function AdminDashboard() {
 
             {/* Buttons */}
             <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/admin/scanner")}
+                className="flex-1 sm:flex-none bg-purple-600/10 border-purple-600/30 hover:bg-purple-600/20 text-purple-400"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                Scanner
+              </Button>
               <Button
                 variant="outline"
                 onClick={exportToCSV}
