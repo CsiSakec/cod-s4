@@ -585,14 +585,14 @@ export default function RegistrationForm() {
     selectedRounds.forEach(() => {
       if (participantTypes.includes("inter")) {
         if (isFromSakec === "yes") {
-          total += isCSI ? 50 : 100;
+          total += isCSI ? 40 : 80;
         } else {
           total += 150;
         }
       }
 
       if (participantTypes.includes("intra")) {
-        total += isCSI ? 50 : 100;
+        total += isCSI ? 40 : 80;
       }
     });
 
@@ -1357,9 +1357,9 @@ export default function RegistrationForm() {
                             </span>{" "}
                             ₹
                             {isFromSakec === "yes"
-                              ? "100"
+                              ? "80"
                               : isCsiMember
-                                ? "50"
+                                ? "40"
                                 : "150"}
                             <span className="text-sm ml-2 text-[rgba(167,139,250,0.7)]">
                               {isFromSakec === "yes"
