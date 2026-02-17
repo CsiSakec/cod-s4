@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>COD Season 5 — Postponed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #050505;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono', monospace;
+            color: #e8e0cc;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+                    rgba(0, 0, 0, 0.07) 2px, rgba(0, 0, 0, 0.07) 4px);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(180, 130, 30, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180, 130, 30, 0.06) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.88) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .content {
+            position: relative;
+            z-index: 20;
+            text-align: center;
+            max-width: 720px;
+            width: 90%;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            color: #c8a84b;
+            border: 1px solid rgba(200, 168, 75, 0.4);
+            padding: 0.35rem 1rem;
+            background: rgba(200, 168, 75, 0.05);
+        }
+
+        .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ff3b3b;
+            box-shadow: 0 0 8px #ff3b3b;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0
+            }
+        }
+
+        .logo-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .cod-logo {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(5rem, 18vw, 9rem);
+            line-height: 0.9;
+            color: #ffffff;
+            text-shadow:
+                0 0 20px rgba(200, 168, 75, 0.5),
+                0 0 60px rgba(200, 168, 75, 0.2),
+                4px 4px 0 rgba(200, 168, 75, 0.15);
+            letter-spacing: 0.05em;
+            animation: float-logo 4s ease-in-out infinite;
+        }
+
+        @keyframes float-logo {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        .cod-logo.glitch {
+            animation: glitch-anim 0.15s steps(2) forwards;
+        }
+
+        @keyframes glitch-anim {
+            0% {
+                transform: translate(-4px, 0);
+                color: #ff3b3b;
+                text-shadow: 4px 0 #00ffcc;
+            }
+
+            33% {
+                transform: translate(4px, 0);
+                color: #00ffcc;
+                text-shadow: -4px 0 #ff3b3b;
+            }
+
+            66% {
+                transform: translate(-2px, 0);
+                color: #fff;
+            }
+
+            100% {
+                transform: translate(0, 0);
+                color: #fff;
+                text-shadow: 0 0 20px rgba(200, 168, 75, 0.5);
+            }
+        }
+
+        .season-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5em;
+            color: #c8a84b;
+        }
+
+        .status-block {
+            width: 100%;
+            border: 1px solid rgba(200, 168, 75, 0.25);
+            background: rgba(200, 168, 75, 0.04);
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.15em;
+            color: #7a7468;
+        }
+
+        .status-value {
+            margin-left: auto;
+            font-size: 0.82rem;
+            letter-spacing: 0.2em;
+            font-weight: bold;
+            padding: 0.2rem 0.75rem;
+            border: 1px solid;
+        }
+
+        .status-value.postponed {
+            color: #ff3b3b;
+            border-color: rgba(255, 59, 59, 0.5);
+            background: rgba(255, 59, 59, 0.08);
+            text-shadow: 0 0 8px rgba(255, 59, 59, 0.5);
+            animation: pulse-red 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 rgba(255, 59, 59, 0)
+            }
+
+            50% {
+                box-shadow: 0 0 12px rgba(255, 59, 59, 0.3)
+            }
+        }
+
+        .status-value.tba {
+            color: #c8a84b;
+            border-color: rgba(200, 168, 75, 0.5);
+            background: rgba(200, 168, 75, 0.08);
+            text-shadow: 0 0 8px rgba(200, 168, 75, 0.4);
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(200, 168, 75, 0.15);
+        }
+
+        .headline {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(2.5rem, 9vw, 5rem);
+            line-height: 1.05;
+            color: #e8e0cc;
+            letter-spacing: 0.04em;
+        }
+
+        .headline .accent {
+            color: #c8a84b;
+            text-shadow: 0 0 30px rgba(200, 168, 75, 0.4);
+        }
+
+        .subtext {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1rem;
+            color: #5a5450;
+            letter-spacing: 0.05em;
+            line-height: 1.6;
+            max-width: 480px;
+        }
+
+        .alert-box {
+            width: 100%;
+            border-left: 3px solid #c8a84b;
+            background: rgba(200, 168, 75, 0.06);
+            padding: 1rem 1.25rem;
+            text-align: left;
+        }
+
+        .alert-header {
+            font-size: 0.68rem;
+            letter-spacing: 0.25em;
+            color: #c8a84b;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-text {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.92rem;
+            color: #7a7468;
+            line-height: 1.5;
+        }
+
+        .alert-text strong {
+            color: #c8a84b;
+        }
+
+        .social-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .social-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.2em;
+            color: #6a6458;
+            text-decoration: none;
+            border: 1px solid rgba(106, 100, 88, 0.35);
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .social-btn:hover {
+            color: #c8a84b;
+            border-color: rgba(200, 168, 75, 0.5);
+            background: rgba(200, 168, 75, 0.07);
+            text-shadow: 0 0 8px rgba(200, 168, 75, 0.4);
+        }
+
+        .footer {
+            font-size: 0.58rem;
+            letter-spacing: 0.15em;
+            color: #2e2c28;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-code {
+            color: #3a3830;
+        }
+
+        /* Entrance animations */
+        .content>* {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: reveal 0.5s ease forwards;
+        }
+
+        .content>*:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .content>*:nth-child(2) {
+            animation-delay: 0.25s;
+        }
+
+        .content>*:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .content>*:nth-child(4) {
+            animation-delay: 0.55s;
+        }
+
+        .content>*:nth-child(5) {
+            animation-delay: 0.7s;
+        }
+
+        .content>*:nth-child(6) {
+            animation-delay: 0.85s;
+        }
+
+        .content>*:nth-child(7) {
+            animation-delay: 1s;
+        }
+
+        .content>*:nth-child(8) {
+            animation-delay: 1.15s;
+        }
+
+        @keyframes reveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .status-line {
+                flex-wrap: wrap;
+            }
+
+            .status-value {
+                margin-left: 0;
+            }
+
+            .social-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .social-btn {
+                width: 200px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <div class="grid-bg"></div>
+    <div class="vignette"></div>
+
+    <div class="content">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            SYSTEM ALERT
+        </div>
+
+        <div class="logo-area">
+            <div class="cod-logo" id="codLogo">COD</div>
+            <div class="season-label">SEASON 05</div>
+        </div>
+
+        <div class="status-block">
+            <div class="status-line">
+                ⬛ STATUS
+                <span class="status-value postponed">POSTPONED</span>
+            </div>
+            <div class="divider"></div>
+            <div class="status-line">
+                📅 LAUNCH DATE
+                <span class="status-value tba">TBA</span>
+            </div>
+        </div>
+
+        <h1 class="headline">
+            DATES TO BE<br>
+            <span class="accent">ANNOUNCED</span>
+        </h1>
+
+        <p class="subtext">
+            Season 5 launch has been delayed. Our operators are standing by.
+            Stay locked in for official update communications.
+        </p>
+
+        <div class="alert-box">
+            <div class="alert-header">⚠ INTEL UPDATE</div>
+            <p class="alert-text">
+                New launch dates will be broadcast across all official channels.
+                Follow <strong>@CallofDuty</strong> for real-time deployment orders.
+            </p>
+        </div>
+
+        <div class="social-row">
+            <a href="https://twitter.com/callofduty" target="_blank" class="social-btn">𝕏 TWITTER</a>
+            <a href="https://www.callofduty.com" target="_blank" class="social-btn">🌐 OFFICIAL SITE</a>
+        </div>
+
+        <div class="footer">
+            <span class="footer-code">SYS_ERR: S05_DEPLOY_HOLD</span>
+            <span>|</span>
+            <span>© ACTIVISION. ALL RIGHTS RESERVED.</span>
+        </div>
+    </div>
+
+    <script>
+        const logo = document.getElementById('codLogo');
+        function triggerGlitch() {
+            logo.classList.add('glitch');
+            setTimeout(() => logo.classList.remove('glitch'), 150);
+            setTimeout(triggerGlitch, 3000 + Math.random() * 3000);
+        }
+        setTimeout(triggerGlitch, 2000);
+    </script>
+</body>
+
+</html>
