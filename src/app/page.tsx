@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const SITE_LIVE = false;
+const SITE_LIVE = true;
 
 import HeroCarousel from "@/components/hero-carousel";
 import DescriptionSection from "@/components/description-section";

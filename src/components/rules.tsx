@@ -271,39 +271,45 @@ export function Rules() {
                       Registration Period
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 01 - Feb 18, 2026
+                      Feb 01 - March 25, 2026
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
-                      Rookie Round
+                      Inter College Rookie (Round 1)
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 18, 2026 10:30am to 11:45am
+                      March 25, 2026 10:30am to 11:45am
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
-                      Open Round
+                      Inter College Advance (Round 2)
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 18, 2026 12:00pm to 01:15pm
+                      March 25, 2026 12:00pm to 01:15pm
+                    </p>
+                  </div>
+                  <div className="schedule-card rounded-lg p-4 md:col-span-2 text-center italic" style={{ borderStyle: 'dashed', opacity: 0.8 }}>
+                    <h3 className="font-medium mb-1 text-[#a78bfa]">Break Period</h3>
+                    <p style={{ color: "rgba(190,190,220,0.8)" }}>
+                      March 25, 2026 01:15pm to 01:45pm
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
-                      Intra Rookie
+                      Intra College Rookie (Round 3)
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 18, 2026 01:45pm to 03:00pm
+                      March 25, 2026 01:45pm to 03:00pm
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
                     <h3 className="font-medium mb-2 text-[#a78bfa]">
-                      Intra Open
+                      Intra College Advance (Round 4)
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 18, 2026 03:15pm to 04:30pm
+                      March 25, 2026 03:15pm to 04:30pm
                     </p>
                   </div>
                 </div>

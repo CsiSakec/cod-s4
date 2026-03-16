@@ -634,10 +634,10 @@ export default function RegistrationForm() {
       educationType === "diploma";
 
     if (isJunior) {
-      return ["Rookie(round1)", "Open(round2)"];
+      return ["Rookie(round1)", "Advance(round2)"];
     }
 
-    return ["Open(round2)"];
+    return ["Advance(round2)"];
   };
 
   useEffect(() => {
