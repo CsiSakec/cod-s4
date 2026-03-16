@@ -271,7 +271,7 @@ export function Rules() {
                       Registration Period
                     </h3>
                     <p style={{ color: "rgba(190,190,220,0.8)" }}>
-                      Feb 01 - March 25, 2026
+                      March 01 - March 25, 2026
                     </p>
                   </div>
                   <div className="schedule-card rounded-lg p-4">
