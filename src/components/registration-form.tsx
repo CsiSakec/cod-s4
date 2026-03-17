@@ -247,7 +247,7 @@ export default function RegistrationForm() {
         throw new Error("Payment proof is required");
       }
 
-      if (isFromSakec === "yes" && isCsiMember === "yes" && !values.csiProof) {
+      if (isCsiMember === "yes" && !values.csiProof) {
         throw new Error("CSI membership proof is required");
       }
 
@@ -290,7 +290,7 @@ export default function RegistrationForm() {
         participationDetails: {
           isFromSakec: values.isFromSakec,
           participantTypes,
-          isCsiMember: isFromSakec === "yes" ? isCsiMember : null,
+          isCsiMember,
           selectedRounds,
           totalPrice,
           transactionID: values.transactionID,
@@ -325,28 +325,14 @@ export default function RegistrationForm() {
       <h2 style="color: #1a73e8; font-size: 18px; margin-bottom: 15px;">Registration Details:</h2>
       <ul style="list-style: none; padding: 0; margin: 0;">
         <li style="margin-bottom: 10px;"><strong>Registration ID:</strong> ${registrationId}</li>
-        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${
-          values.name
-        }</li>
-        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${
-          values.email
-        }</li>
-        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${
-          values.phone
-        }</li>
-        <li style="margin-bottom: 10px;"><strong>College:</strong> ${
-          values.college
-        }</li>
-        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${
-          values.year
-        }</li>
-        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${
-          values.branch
-        }</li>
+        <li style="margin-bottom: 10px;"><strong>Name:</strong> ${values.name}</li>
+        <li style="margin-bottom: 10px;"><strong>Email:</strong> ${values.email}</li>
+        <li style="margin-bottom: 10px;"><strong>Phone:</strong> ${values.phone}</li>
+        <li style="margin-bottom: 10px;"><strong>College:</strong> ${values.college}</li>
+        <li style="margin-bottom: 10px;"><strong>Year:</strong> ${values.year}</li>
+        <li style="margin-bottom: 10px;"><strong>Branch:</strong> ${values.branch}</li>
         <li style="margin-bottom: 10px;"><strong>Total Amount Paid:</strong> ₹${totalPrice}</li>
-        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${
-          values.transactionID
-        }</li>
+        <li style="margin-bottom: 10px;"><strong>Transaction ID:</strong> ${values.transactionID}</li>
       </ul>
     </div>
 
@@ -362,7 +348,7 @@ export default function RegistrationForm() {
         ? `
     <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
       <h3 style="color: #155724; font-size: 16px; margin-bottom: 10px;">Intra-College Participation</h3>
-      <p style="font-size: 14px; color: #155724;">You have  registered as an <strong>Intra-College</strong> participant.</p>
+      <p style="font-size: 14px; color: #155724;">You have registered as an <strong>Intra-College</strong> participant.</p>
     </div>`
         : ""
     }
@@ -479,8 +465,9 @@ export default function RegistrationForm() {
       }
 
       if (step === 3) {
-        if (isFromSakec === "yes" && !isCsiMember) {
-          toast.error("Please indicate if you are a CSI SAKEC member");
+        // For both SAKEC and non-SAKEC inter-college participants, CSI membership must be answered
+        if (!isCsiMember) {
+          toast.error("Please indicate if you are a CSI member");
           return;
         }
 
@@ -506,11 +493,8 @@ export default function RegistrationForm() {
           return;
         }
 
-        if (
-          isFromSakec === "yes" &&
-          isCsiMember === "yes" &&
-          !form.getValues().csiProof
-        ) {
+        // Require CSI proof for any CSI member (SAKEC or non-SAKEC)
+        if (isCsiMember === "yes" && !form.getValues().csiProof) {
           toast.error("Please upload CSI membership proof");
           return;
         }
@@ -533,6 +517,7 @@ export default function RegistrationForm() {
     if (value === "no") {
       setParticipantTypes(["inter"]);
       form.setValue("participantType", ["inter"]);
+      // Reset CSI member when switching — user must re-answer
       setIsCsiMember(null);
       form.setValue("isCsiMember", undefined);
     } else {
@@ -540,6 +525,8 @@ export default function RegistrationForm() {
       form.setValue("participantType", []);
       setEducationType(null);
       form.setValue("educationType", undefined);
+      setIsCsiMember(null);
+      form.setValue("isCsiMember", undefined);
     }
   };
 
@@ -585,13 +572,16 @@ export default function RegistrationForm() {
     selectedRounds.forEach(() => {
       if (participantTypes.includes("inter")) {
         if (isFromSakec === "yes") {
+          // SAKEC inter-college: CSI ₹40, non-CSI ₹80
           total += isCSI ? 40 : 80;
         } else {
-          total += 150;
+          // Non-SAKEC inter-college: CSI ₹80, non-CSI ₹100
+          total += isCSI ? 80 : 100;
         }
       }
 
       if (participantTypes.includes("intra")) {
+        // Intra unchanged: CSI ₹40, non-CSI ₹80
         total += isCSI ? 40 : 80;
       }
     });
@@ -634,10 +624,10 @@ export default function RegistrationForm() {
       educationType === "diploma";
 
     if (isJunior) {
-      return ["Rookie(round1)", "Advance(round2)"];
+      return ["Rookie(round1)", "Open(round2)"];
     }
 
-    return ["Advance(round2)"];
+    return ["Open(round2)"];
   };
 
   useEffect(() => {
@@ -1170,52 +1160,60 @@ export default function RegistrationForm() {
                     </p>
                   </div>
 
-                  {isFromSakec === "yes" && (
-                    <FormField
-                      control={form.control}
-                      name="isCsiMember"
-                      render={({ field }) => (
-                        <FormItem className="space-y-3">
-                          <FormLabel className="text-[rgba(220,220,240,0.9)]">
-                            Are you a CSI SAKEC member? 🎖️
-                          </FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={(value: "yes" | "no") =>
-                                handleCsiMemberChange(value)
-                              }
-                              defaultValue={field.value}
-                              className="flex flex-col space-y-1"
-                            >
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem
-                                    value="yes"
-                                    className="border-[rgba(124,92,252,0.4)]"
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal text-[rgba(190,190,220,0.8)]">
-                                  Yes, I am a CSI SAKEC member
-                                </FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem
-                                    value="no"
-                                    className="border-[rgba(124,92,252,0.4)]"
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal text-[rgba(190,190,220,0.8)]">
-                                  No, I am not a CSI SAKEC member
-                                </FormLabel>
-                              </FormItem>
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  {/* ── CSI Member question shown for ALL participants ── */}
+                  <FormField
+                    control={form.control}
+                    name="isCsiMember"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="text-[rgba(220,220,240,0.9)]">
+                          Are you a CSI member? 🎖️
+                          {isFromSakec === "no" && (
+                            <span className="ml-2 text-xs text-[rgba(167,139,250,0.7)]">
+                              (CSI members get a discounted rate of ₹80/round)
+                            </span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(value: "yes" | "no") =>
+                              handleCsiMemberChange(value)
+                            }
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem
+                                  value="yes"
+                                  className="border-[rgba(124,92,252,0.4)]"
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal text-[rgba(190,190,220,0.8)]">
+                                {isFromSakec === "yes"
+                                  ? "Yes, I am a CSI SAKEC member"
+                                  : "Yes, I am a CSI member"}
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem
+                                  value="no"
+                                  className="border-[rgba(124,92,252,0.4)]"
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal text-[rgba(190,190,220,0.8)]">
+                                {isFromSakec === "yes"
+                                  ? "No, I am not a CSI SAKEC member"
+                                  : "No, I am not a CSI member"}
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {participantTypes.includes("intra") && (
                     <FormField
@@ -1339,7 +1337,7 @@ export default function RegistrationForm() {
                                     : "Third and Final year students can choose from rounds 2 or 3 only"
                                   : educationType === "bachelors" &&
                                       (year === "TE" || year === "BE")
-                                    ? "Third and Final year bachelor's students can choose from rounds 2 or 4 only"
+                                    ? "Third and Final year bachelor's students can choose from Open (Round 2) only"
                                     : "You can choose from the available rounds"}
                               </FormDescription>
                               <FormMessage />
@@ -1357,14 +1355,18 @@ export default function RegistrationForm() {
                             </span>{" "}
                             ₹
                             {isFromSakec === "yes"
-                              ? "80"
-                              : isCsiMember
+                              ? isCsiMember === "yes"
                                 ? "40"
-                                : "150"}
+                                : "80"
+                              : isCsiMember === "yes"
+                                ? "80"
+                                : "100"}
                             <span className="text-sm ml-2 text-[rgba(167,139,250,0.7)]">
                               {isFromSakec === "yes"
-                                ? "(Fixed Price for SAKEC students)"
-                                : isCsiMember
+                                ? isCsiMember === "yes"
+                                  ? "(CSI SAKEC Member Price)"
+                                  : "(Standard SAKEC Price)"
+                                : isCsiMember === "yes"
                                   ? "(CSI Member Price)"
                                   : "(Standard Price)"}
                             </span>
@@ -1456,7 +1458,7 @@ export default function RegistrationForm() {
                       </h4>
                       <p className="text-[rgba(190,190,220,0.8)] mb-1">
                         <span className="font-medium">Account Name:</span> CSI
-                        SAKE
+                        SAKEC
                       </p>
                       <p className="text-[rgba(190,190,220,0.8)] mb-1">
                         <span className="font-medium">Account Number:</span>{" "}
@@ -1542,14 +1544,15 @@ export default function RegistrationForm() {
                       )}
                     />
 
-                    {isFromSakec === "yes" && isCsiMember === "yes" && (
+                    {/* CSI proof required for ANY CSI member, SAKEC or non-SAKEC */}
+                    {isCsiMember === "yes" && (
                       <FormField
                         control={form.control}
                         name="csiProof"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-[rgba(220,220,240,0.9)]">
-                              Upload CSI SAKEC Membership Proof 🆔
+                              Upload CSI Membership Proof 🆔
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -1581,8 +1584,8 @@ export default function RegistrationForm() {
                               />
                             </FormControl>
                             <FormDescription className="text-[rgba(167,139,250,0.7)]">
-                              Upload a screenshot of your CSI SAKEC membership
-                              card (PNG, JPG only)
+                              Upload a screenshot of your CSI membership card
+                              (PNG, JPG only)
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

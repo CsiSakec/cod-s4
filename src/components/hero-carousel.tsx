@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 const slides = [
   {
     id: 1,
-    image: "/banner.png",
+    image: "/banner.jpg",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
   },
@@ -20,18 +20,12 @@ const slides = [
   },
   {
     id: 3,
-    image: "/banner4.jpg",
-    title: "Register Now",
-    description: "Limited spots available. Don't miss out!",
-  },
-  {
-    id: 4,
     image: "/banner5.jpg",
     title: "Register Now",
     description: "Limited spots available. Don't miss out!",
   },
   {
-    id: 5,
+    id: 4,
     image: "/events.png",
     title: "Compete with the Best",
     description: "Show your skills and win amazing prizes",
@@ -60,16 +54,10 @@ export default function HeroCarousel() {
     <>
       <style>{`
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: scale(1.1);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(1.03); }
+          to   { opacity: 1; transform: scale(1);    }
         }
-        
+
         .slide-active {
           animation: slideIn 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
@@ -80,7 +68,6 @@ export default function HeroCarousel() {
           backdrop-filter: blur(10px);
           transition: all 0.3s ease;
         }
-
         .nav-button:hover {
           background: linear-gradient(145deg, rgba(124,92,252,0.4), rgba(167,139,250,0.3));
           border-color: rgba(124,92,252,0.6);
@@ -92,37 +79,48 @@ export default function HeroCarousel() {
           background: rgba(255,255,255,0.3);
           backdrop-filter: blur(4px);
         }
-
         .indicator-active {
           background: linear-gradient(135deg, #7c5cfc, #a78bfa);
           box-shadow: 0 0 12px rgba(124,92,252,0.6);
         }
+
+        /*
+          aspect-ratio 16/9 perfectly matches your COD5 banner dimensions.
+          The container auto-sizes with page width — no fixed height that crops.
+        */
+        .carousel-wrapper {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          overflow: hidden;
+          background: #0a0a14;
+        }
       `}</style>
 
-      <div className="relative w-full h-[30vh] sm:h-[90vh] overflow-hidden">
-        {/* Gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(10,10,20,0.3)] z-10 pointer-events-none" />
+      <div className="carousel-wrapper">
+        {/* Subtle bottom-fade overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(10,10,20,0.25)] z-10 pointer-events-none" />
 
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute top-0 left-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
               index === currentSlide
                 ? "opacity-100 slide-active"
                 : "opacity-0 pointer-events-none"
             }`}
           >
-            <div className="relative w-full h-full">
-              <Image
-                src={slide.image || "/placeholder.svg"}
-                alt={slide.title}
-                fill
-                className="object-cover object-top"
-                priority={index === 0}
-              />
-              {/* Vignette effect */}
-              <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[rgba(10,10,20,0.4)]" />
-            </div>
+            <Image
+              src={slide.image || "/placeholder.svg"}
+              alt={slide.title}
+              fill
+              /*
+                object-contain = zero cropping, entire banner always visible.
+                With aspect-ratio 16/9 container the banner fills edge-to-edge.
+              */
+              className="object-contain object-center"
+              priority={index === 0}
+            />
           </div>
         ))}
 
@@ -147,13 +145,13 @@ export default function HeroCarousel() {
           <span className="sr-only">Next slide</span>
         </Button>
 
-        {/* Enhanced indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
+        {/* Indicators */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
           {slides.map((_, index) => (
             <button
               key={index}
-              className={`w-3 h-3 rounded-full indicator ${
-                index === currentSlide ? "indicator-active w-8" : ""
+              className={`h-3 rounded-full indicator ${
+                index === currentSlide ? "indicator-active w-8" : "w-3"
               }`}
               onClick={() => setCurrentSlide(index)}
             >
