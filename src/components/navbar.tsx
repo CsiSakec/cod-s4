@@ -11,6 +11,7 @@ const navLinks = [
   { label: "About", href: "/about" },
   { label: "Team", href: "/team" },
   { label: "Event Support", href: "/support" },
+  { label: "Contest", href: "/contest" },
 ];
 
 export default function Navbar() {
