@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { database } from "@/firebaseConfig";
 import { ref, onValue } from "firebase/database";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowLeft,
   Users,
   TrendingUp,
   Award,
   MessageSquare,
+  Download,
+  BarChart3,
+  TableIcon,
+  Search,
+  X,
 } from "lucide-react";
 import {
   BarChart,
@@ -29,24 +33,39 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Legend,
 } from "recharts";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  createColumnHelper,
+  SortingState,
+} from "@tanstack/react-table";
+import * as XLSX from "xlsx";
 
-/* ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
    Types
-────────────────────────────────────────────── */
+───────────────────────────────────────────── */
 interface FeedbackEntry {
   id: string;
   submittedAt: string;
   personalInfo: {
     fullName: string;
     email: string;
-    participantType: string;
+    contact?: string;
     isCsiMember: string;
+    participantType: string;
   };
   academicInfo: {
     branch: string;
     year: string;
+    division?: string;
+    rollNo?: string;
+    prn?: string;
+    college?: string;
   };
   feedbackResponses: {
     q1_engineeringKnowledge: string;
@@ -63,70 +82,30 @@ interface FeedbackEntry {
   remarks: string;
 }
 
-/* ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
    Constants
-────────────────────────────────────────────── */
-const SCALE_OPTIONS = [
-  "Strongly Agree",
-  "Agree",
-  "Neutral",
-  "Disagree",
-  "Strongly Disagree",
-];
-const LIKELIHOOD_OPTIONS = [
-  "Very Likely",
-  "Likely",
-  "Neutral",
-  "Unlikely",
-  "Very Unlikely",
-];
-
-const QUESTION_LABELS = [
+───────────────────────────────────────────── */
+const Q_LABELS = [
   {
     key: "q1_engineeringKnowledge",
-    short: "Engineering\nKnowledge",
-    full: "Q1: Engineering Knowledge",
+    short: "Q1",
+    label: "Engineering Knowledge",
   },
-  {
-    key: "q2_technicalTools",
-    short: "Technical\nTools",
-    full: "Q2: Technical Tools",
-  },
-  {
-    key: "q3_problemSolving",
-    short: "Problem\nSolving",
-    full: "Q3: Problem Solving",
-  },
-  { key: "q4_teamwork", short: "Teamwork", full: "Q4: Teamwork" },
-  { key: "q5_modernTools", short: "Modern\nTools", full: "Q5: Modern Tools" },
-  {
-    key: "q6_lifelongLearning",
-    short: "Lifelong\nLearning",
-    full: "Q6: Lifelong Learning",
-  },
-  {
-    key: "q7_ethicalPractices",
-    short: "Ethics",
-    full: "Q7: Ethical Practices",
-  },
-  {
-    key: "q8_entrepreneurship",
-    short: "Entrepreneur-\nship",
-    full: "Q8: Entrepreneurship",
-  },
-  {
-    key: "q9_skillsEquipped",
-    short: "Skills\nEquipped",
-    full: "Q9: Skills Equipped",
-  },
+  { key: "q2_technicalTools", short: "Q2", label: "Technical Tools" },
+  { key: "q3_problemSolving", short: "Q3", label: "Problem Solving" },
+  { key: "q4_teamwork", short: "Q4", label: "Teamwork" },
+  { key: "q5_modernTools", short: "Q5", label: "Modern Tools" },
+  { key: "q6_lifelongLearning", short: "Q6", label: "Lifelong Learning" },
+  { key: "q7_ethicalPractices", short: "Q7", label: "Ethical Practices" },
+  { key: "q8_entrepreneurship", short: "Q8", label: "Entrepreneurship" },
+  { key: "q9_skillsEquipped", short: "Q9", label: "Skills Equipped" },
   {
     key: "q10_futureParticipation",
-    short: "Future\nParticipation",
-    full: "Q10: Future Participation",
+    short: "Q10",
+    label: "Future Participation",
   },
 ];
 
-/* Map response → numeric score (5=best, 1=worst) */
 const SCORE_MAP: Record<string, number> = {
   "Strongly Agree": 5,
   Agree: 4,
@@ -139,215 +118,400 @@ const SCORE_MAP: Record<string, number> = {
   "Very Unlikely": 1,
 };
 
-const PIE_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"];
-const BAR_GRADIENT_START = "#6366f1";
-const BAR_GRADIENT_END = "#a78bfa";
-
-const BRANCH_COLORS: Record<string, string> = {
-  COMPS: "#6366f1",
-  IT: "#8b5cf6",
-  "AI-DS": "#ec4899",
-  CYSE: "#f59e0b",
-  ECS: "#10b981",
-  EXTC: "#3b82f6",
-  ACT: "#ef4444",
-  VLSI: "#14b8a6",
+// Fully explicit solid colors — no CSS vars, no opacity in fill
+const C = {
+  bars: [
+    "#818cf8",
+    "#a78bfa",
+    "#c084fc",
+    "#e879f9",
+    "#f472b6",
+    "#fb7185",
+    "#f97316",
+    "#facc15",
+    "#4ade80",
+    "#22d3ee",
+  ],
+  pie1: ["#818cf8", "#f472b6", "#4ade80", "#facc15", "#22d3ee"],
+  sentiment: {
+    Positive: "#4ade80",
+    Neutral: "#facc15",
+    Negative: "#f87171",
+  } as Record<string, string>,
+  csi: { Yes: "#818cf8", No: "#f87171" } as Record<string, string>,
+  branch: {
+    COMPS: "#818cf8",
+    IT: "#a78bfa",
+    "AI-DS": "#f472b6",
+    CYSE: "#facc15",
+    ECS: "#4ade80",
+    EXTC: "#22d3ee",
+    ACT: "#f97316",
+    VLSI: "#fb7185",
+  } as Record<string, string>,
+  year: ["#818cf8", "#e879f9", "#4ade80", "#f97316"],
+  radar: "#a78bfa",
 };
 
-/* ──────────────────────────────────────────────
-   Helpers
-────────────────────────────────────────────── */
-function avg(nums: number[]) {
-  if (!nums.length) return 0;
-  return nums.reduce((a, b) => a + b, 0) / nums.length;
-}
+const BRANCHES = ["COMPS", "IT", "AI-DS", "CYSE", "ECS", "EXTC", "ACT", "VLSI"];
+const YEARS = ["FE", "SE", "TE", "BTech"];
+const LIKELIHOOD = [
+  "Very Likely",
+  "Likely",
+  "Neutral",
+  "Unlikely",
+  "Very Unlikely",
+];
 
-function countBy<T>(arr: T[], key: (item: T) => string) {
-  return arr.reduce<Record<string, number>>((acc, item) => {
+/* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+const avg = (nums: number[]) =>
+  nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+const countBy = <T,>(
+  arr: T[],
+  key: (item: T) => string,
+): Record<string, number> =>
+  arr.reduce<Record<string, number>>((acc, item) => {
     const k = key(item);
     acc[k] = (acc[k] || 0) + 1;
     return acc;
   }, {});
-}
 
-/* ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
    Custom Tooltip
-────────────────────────────────────────────── */
-const CustomBarTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-gray-900 border border-purple-500/30 rounded-lg px-3 py-2 text-sm shadow-xl">
-        <p className="text-purple-300 font-semibold mb-1">{label}</p>
-        {payload.map((p: any) => (
-          <p key={p.name} style={{ color: p.color }}>
-            {p.name}:{" "}
-            <span className="font-bold">
-              {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
-            </span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
+───────────────────────────────────────────── */
+const Tip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: "#1e1b4b",
+        border: "1px solid #4c1d95",
+        borderRadius: 10,
+        padding: "10px 14px",
+        fontSize: 13,
+      }}
+    >
+      {label && (
+        <p style={{ color: "#c4b5fd", fontWeight: 700, marginBottom: 4 }}>
+          {label}
+        </p>
+      )}
+      {payload.map((p: any) => (
+        <p
+          key={p.name}
+          style={{
+            color: typeof p.fill === "string" ? p.fill : "#e2e8f0",
+            margin: "2px 0",
+          }}
+        >
+          {p.name}:{" "}
+          <strong style={{ color: "#fff" }}>
+            {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
+          </strong>
+        </p>
+      ))}
+    </div>
+  );
 };
 
-/* ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
    Stat Card
-────────────────────────────────────────────── */
+───────────────────────────────────────────── */
 function StatCard({
   icon,
   label,
   value,
   sub,
-  color,
+  bg,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
   sub?: string;
-  color: string;
+  bg: string;
 }) {
   return (
     <div
-      className={`rounded-2xl border border-purple-500/20 bg-gray-900/60 backdrop-blur p-5 flex items-center gap-4`}
+      style={{
+        background: "rgba(30,27,75,0.7)",
+        border: "1px solid rgba(129,140,248,0.25)",
+        borderRadius: 16,
+        padding: "18px 20px",
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+      }}
     >
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 12,
+          background: bg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
       >
         {icon}
       </div>
       <div>
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+        <p
+          style={{
+            margin: 0,
+            fontSize: 11,
+            color: "#94a3b8",
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
           {label}
         </p>
-        <p className="text-2xl font-bold text-white">{value}</p>
-        {sub && <p className="text-xs text-purple-400 mt-0.5">{sub}</p>}
+        <p
+          style={{
+            margin: "2px 0 0",
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#f1f5f9",
+          }}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#818cf8" }}>
+            {sub}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-/* ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Chart Card
+───────────────────────────────────────────── */
+function ChartCard({
+  title,
+  sub,
+  children,
+}: {
+  title: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        background: "rgba(30,27,75,0.65)",
+        border: "1px solid rgba(129,140,248,0.2)",
+        borderRadius: 16,
+        padding: "20px 22px",
+        backdropFilter: "blur(12px)",
+      }}
+    >
+      <p
+        style={{
+          margin: "0 0 2px",
+          fontSize: 14,
+          fontWeight: 700,
+          color: "#c4b5fd",
+        }}
+      >
+        {title}
+      </p>
+      {sub && (
+        <p style={{ margin: "0 0 14px", fontSize: 12, color: "#64748b" }}>
+          {sub}
+        </p>
+      )}
+      {!sub && <div style={{ marginBottom: 14 }} />}
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Legend Dot
+───────────────────────────────────────────── */
+function LegendDot({
+  color,
+  label,
+  value,
+}: {
+  color: string;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        color: "#94a3b8",
+      }}
+    >
+      <div
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+      <span>{label}:</span>
+      <strong style={{ color: "#f1f5f9" }}>{value}</strong>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Score Badge
+───────────────────────────────────────────── */
+function ScoreBadge({ value }: { value: string }) {
+  const score = SCORE_MAP[value];
+  const palette: Record<number, { text: string; bg: string; border: string }> =
+    {
+      5: {
+        text: "#4ade80",
+        bg: "rgba(74,222,128,0.12)",
+        border: "rgba(74,222,128,0.35)",
+      },
+      4: {
+        text: "#a78bfa",
+        bg: "rgba(167,139,250,0.12)",
+        border: "rgba(167,139,250,0.35)",
+      },
+      3: {
+        text: "#facc15",
+        bg: "rgba(250,204,21,0.12)",
+        border: "rgba(250,204,21,0.35)",
+      },
+      2: {
+        text: "#f97316",
+        bg: "rgba(249,115,22,0.12)",
+        border: "rgba(249,115,22,0.35)",
+      },
+      1: {
+        text: "#f87171",
+        bg: "rgba(248,113,113,0.12)",
+        border: "rgba(248,113,113,0.35)",
+      },
+    };
+  if (!score) return <span style={{ color: "#64748b" }}>—</span>;
+  const p = palette[score];
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "2px 8px",
+        borderRadius: 20,
+        background: p.bg,
+        border: `1px solid ${p.border}`,
+        color: p.text,
+        fontSize: 11,
+        fontWeight: 600,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Main Component
-────────────────────────────────────────────── */
+───────────────────────────────────────────── */
 export default function FeedbackAnalysis() {
   const [feedbacks, setFeedbacks] = useState<FeedbackEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<"charts" | "table">("charts");
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
   const router = useRouter();
 
   useEffect(() => {
-    const isAuthenticated =
-      localStorage.getItem("adminAuthenticated") === "true";
-    if (!isAuthenticated) {
+    const ok = localStorage.getItem("adminAuthenticated") === "true";
+    if (!ok) {
       router.push("/admin");
       return;
     }
-
-    const fbRef = ref(database, "eventFeedback");
-    const unsub = onValue(fbRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setFeedbacks(Object.values(data) as FeedbackEntry[]);
-      } else {
-        setFeedbacks([]);
-      }
+    const unsub = onValue(ref(database, "eventFeedback"), (snap) => {
+      setFeedbacks(
+        snap.val() ? (Object.values(snap.val()) as FeedbackEntry[]) : [],
+      );
       setIsLoading(false);
     });
-
     return () => unsub();
   }, [router]);
 
-  /* ── Derived data ── */
-
-  // Average score per question
-  const avgScoresData = QUESTION_LABELS.map((q) => {
+  /* ── Derived Chart Data ── */
+  const avgScores = Q_LABELS.map((q) => {
     const scores = feedbacks
-      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]] ?? 0)
+      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]])
       .filter(Boolean);
     return {
-      name: q.full,
+      name: `${q.short}: ${q.label}`,
       shortName: q.short,
       avg: parseFloat(avg(scores).toFixed(2)),
     };
   });
 
-  // Overall sentiment distribution (all responses combined)
   const allResponses = feedbacks.flatMap((f) =>
     Object.values(f.feedbackResponses),
   );
-  const sentimentCounts = countBy(allResponses, (r) => {
-    const score = SCORE_MAP[r];
-    if (!score) return "Unknown";
-    if (score >= 4) return "Positive";
-    if (score === 3) return "Neutral";
-    return "Negative";
-  });
-  const sentimentPieData = Object.entries(sentimentCounts)
-    .filter(([k]) => k !== "Unknown")
-    .map(([name, value]) => ({ name, value }));
+  const sentimentData = (() => {
+    const cnt = countBy(allResponses, (r) => {
+      const s = SCORE_MAP[r];
+      if (!s) return "Unknown";
+      return s >= 4 ? "Positive" : s === 3 ? "Neutral" : "Negative";
+    });
+    return ["Positive", "Neutral", "Negative"]
+      .map((k) => ({ name: k, value: cnt[k] || 0 }))
+      .filter((d) => d.value > 0);
+  })();
 
-  // Participant type breakdown
-  const participantTypeCounts = countBy(
-    feedbacks,
-    (f) => f.personalInfo.participantType || "Unknown",
-  );
-  const participantPieData = Object.entries(participantTypeCounts).map(
-    ([name, value]) => ({ name, value }),
-  );
+  const participantData = Object.entries(
+    countBy(feedbacks, (f) => f.personalInfo.participantType || "Unknown"),
+  ).map(([name, value]) => ({ name, value }));
 
-  // CSI member breakdown
-  const csiCounts = countBy(
-    feedbacks,
-    (f) => f.personalInfo.isCsiMember || "Unknown",
-  );
-  const csiPieData = Object.entries(csiCounts).map(([name, value]) => ({
-    name,
-    value,
+  const csiData = Object.entries(
+    countBy(feedbacks, (f) => f.personalInfo.isCsiMember || "Unknown"),
+  ).map(([name, value]) => ({ name, value }));
+
+  const branchData = BRANCHES.map((b) => ({
+    branch: b,
+    count: feedbacks.filter((f) => f.academicInfo?.branch === b).length,
+  })).filter((d) => d.count > 0);
+  const yearData = YEARS.map((y) => ({
+    year: y,
+    count: feedbacks.filter((f) => f.academicInfo?.year === y).length,
+  })).filter((d) => d.count > 0);
+  const q10Data = LIKELIHOOD.map((l) => ({
+    label: l,
+    count: feedbacks.filter(
+      (f) => f.feedbackResponses.q10_futureParticipation === l,
+    ).length,
   }));
 
-  // Branch distribution
-  const branchCounts = countBy(
-    feedbacks,
-    (f) => f.academicInfo?.branch || "Unknown",
-  );
-  const branchBarData = Object.entries(branchCounts)
-    .map(([branch, count]) => ({ branch, count }))
-    .sort((a, b) => b.count - a.count);
-
-  // Year distribution
-  const yearCounts = countBy(
-    feedbacks,
-    (f) => f.academicInfo?.year || "Unknown",
-  );
-  const yearBarData = Object.entries(yearCounts).map(([year, count]) => ({
-    year,
-    count,
-  }));
-
-  // Radar data (average score per question, normalized 0–100)
-  const radarData = QUESTION_LABELS.map((q) => {
+  const radarData = Q_LABELS.map((q) => {
     const scores = feedbacks
-      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]] ?? 0)
+      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]])
       .filter(Boolean);
     return {
-      subject: q.short.replace("\n", " "),
+      subject: q.short,
       score: parseFloat(((avg(scores) / 5) * 100).toFixed(1)),
       fullMark: 100,
     };
   });
 
-  // Q10 future participation distribution
-  const q10Counts = countBy(
-    feedbacks,
-    (f) => f.feedbackResponses.q10_futureParticipation || "Unknown",
-  );
-  const q10Data = LIKELIHOOD_OPTIONS.map((opt) => ({
-    label: opt,
-    count: q10Counts[opt] || 0,
-  }));
-
-  // Overall average score
   const allScores = feedbacks.flatMap((f) =>
     Object.values(f.feedbackResponses)
       .map((v) => SCORE_MAP[v])
@@ -356,514 +520,1216 @@ export default function FeedbackAnalysis() {
   const overallAvg = avg(allScores);
   const satisfactionPct = Math.round(((overallAvg - 1) / 4) * 100);
 
-  if (isLoading) {
+  /* ── TanStack Table ── */
+  type Row = FeedbackEntry & { avgScore: number };
+  const tableData: Row[] = useMemo(
+    () =>
+      feedbacks.map((f) => ({
+        ...f,
+        avgScore: parseFloat(
+          avg(
+            Object.values(f.feedbackResponses)
+              .map((v) => SCORE_MAP[v])
+              .filter(Boolean),
+          ).toFixed(2),
+        ),
+      })),
+    [feedbacks],
+  );
+
+  const ch = createColumnHelper<Row>();
+  const columns = useMemo(
+    () => [
+      ch.accessor((r) => r.personalInfo.fullName, {
+        id: "name",
+        header: "Name",
+        cell: (i) => (
+          <span style={{ fontWeight: 600, color: "#c4b5fd" }}>
+            {i.getValue()}
+          </span>
+        ),
+      }),
+      ch.accessor((r) => r.personalInfo.email, {
+        id: "email",
+        header: "Email",
+        cell: (i) => (
+          <span style={{ fontSize: 12, color: "#94a3b8" }}>{i.getValue()}</span>
+        ),
+      }),
+      ch.accessor((r) => r.personalInfo.participantType, {
+        id: "type",
+        header: "Type",
+        cell: (i) => {
+          const v = i.getValue();
+          return (
+            <span
+              style={{
+                padding: "2px 10px",
+                borderRadius: 20,
+                background:
+                  v === "Intra"
+                    ? "rgba(129,140,248,0.15)"
+                    : "rgba(244,114,182,0.15)",
+                color: v === "Intra" ? "#818cf8" : "#f472b6",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {v}
+            </span>
+          );
+        },
+      }),
+      ch.accessor((r) => r.academicInfo?.branch, {
+        id: "branch",
+        header: "Branch",
+        cell: (i) => (
+          <span style={{ color: "#e2e8f0" }}>{i.getValue() || "—"}</span>
+        ),
+      }),
+      ch.accessor((r) => r.academicInfo?.year, {
+        id: "year",
+        header: "Year",
+        cell: (i) => (
+          <span style={{ color: "#e2e8f0" }}>{i.getValue() || "—"}</span>
+        ),
+      }),
+      ch.accessor((r) => r.personalInfo.isCsiMember, {
+        id: "csi",
+        header: "CSI",
+        cell: (i) => {
+          const v = i.getValue();
+          return (
+            <span
+              style={{
+                padding: "2px 8px",
+                borderRadius: 20,
+                background:
+                  v === "Yes"
+                    ? "rgba(74,222,128,0.12)"
+                    : "rgba(248,113,113,0.12)",
+                color: v === "Yes" ? "#4ade80" : "#f87171",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {v}
+            </span>
+          );
+        },
+      }),
+      ch.accessor((r) => r.feedbackResponses.q1_engineeringKnowledge, {
+        id: "q1",
+        header: "Q1",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q2_technicalTools, {
+        id: "q2",
+        header: "Q2",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q3_problemSolving, {
+        id: "q3",
+        header: "Q3",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q4_teamwork, {
+        id: "q4",
+        header: "Q4",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q5_modernTools, {
+        id: "q5",
+        header: "Q5",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q6_lifelongLearning, {
+        id: "q6",
+        header: "Q6",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q7_ethicalPractices, {
+        id: "q7",
+        header: "Q7",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q8_entrepreneurship, {
+        id: "q8",
+        header: "Q8",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q9_skillsEquipped, {
+        id: "q9",
+        header: "Q9",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor((r) => r.feedbackResponses.q10_futureParticipation, {
+        id: "q10",
+        header: "Q10",
+        cell: (i) => <ScoreBadge value={i.getValue()} />,
+      }),
+      ch.accessor("avgScore", {
+        header: "Avg",
+        cell: (i) => {
+          const v = i.getValue();
+          const pct = Math.round(((v - 1) / 4) * 100);
+          const color =
+            pct >= 70 ? "#4ade80" : pct >= 50 ? "#facc15" : "#f87171";
+          return (
+            <span style={{ color, fontWeight: 700 }}>
+              {v}
+              <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 3 }}>
+                ({pct}%)
+              </span>
+            </span>
+          );
+        },
+      }),
+      ch.accessor("remarks", {
+        header: "Remarks",
+        cell: (i) => (
+          <span
+            style={{
+              fontSize: 12,
+              color: "#94a3b8",
+              maxWidth: 180,
+              display: "block",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={i.getValue()}
+          >
+            {i.getValue() || "—"}
+          </span>
+        ),
+      }),
+      ch.accessor("submittedAt", {
+        header: "Date",
+        cell: (i) => (
+          <span style={{ fontSize: 11, color: "#64748b" }}>
+            {new Date(i.getValue()).toLocaleDateString()}
+          </span>
+        ),
+      }),
+    ],
+    [],
+  );
+
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    state: { globalFilter, sorting },
+    onGlobalFilterChange: setGlobalFilter,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 15 } },
+  });
+
+  /* ── Excel Export ── */
+  const exportExcel = () => {
+    const rows = feedbacks.map((f) => ({
+      Name: f.personalInfo.fullName,
+      Email: f.personalInfo.email,
+      Contact: f.personalInfo.contact || "",
+      "Participant Type": f.personalInfo.participantType,
+      "CSI Member": f.personalInfo.isCsiMember,
+      Branch: f.academicInfo?.branch || "",
+      Year: f.academicInfo?.year || "",
+      Division: f.academicInfo?.division || "",
+      "Roll No": f.academicInfo?.rollNo || "",
+      PRN: f.academicInfo?.prn || "",
+      College: f.academicInfo?.college || "",
+      "Q1 - Engineering Knowledge": f.feedbackResponses.q1_engineeringKnowledge,
+      "Q2 - Technical Tools": f.feedbackResponses.q2_technicalTools,
+      "Q3 - Problem Solving": f.feedbackResponses.q3_problemSolving,
+      "Q4 - Teamwork": f.feedbackResponses.q4_teamwork,
+      "Q5 - Modern Tools": f.feedbackResponses.q5_modernTools,
+      "Q6 - Lifelong Learning": f.feedbackResponses.q6_lifelongLearning,
+      "Q7 - Ethical Practices": f.feedbackResponses.q7_ethicalPractices,
+      "Q8 - Entrepreneurship": f.feedbackResponses.q8_entrepreneurship,
+      "Q9 - Skills Equipped": f.feedbackResponses.q9_skillsEquipped,
+      "Q10 - Future Participation": f.feedbackResponses.q10_futureParticipation,
+      "Avg Score": parseFloat(
+        avg(
+          Object.values(f.feedbackResponses)
+            .map((v) => SCORE_MAP[v])
+            .filter(Boolean),
+        ).toFixed(2),
+      ),
+      Remarks: f.remarks,
+      "Submitted At": new Date(f.submittedAt).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = Object.keys(rows[0] || {}).map(() => ({ wch: 22 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Feedback");
+    XLSX.writeFile(
+      wb,
+      `CSI_Feedback_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
+  };
+
+  /* ─────────────────────────────────────────────
+     Render
+  ───────────────────────────────────────────── */
+  if (isLoading)
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-          <p className="text-purple-300 text-sm">Loading feedback data…</p>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0a1a",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              border: "3px solid rgba(129,140,248,0.3)",
+              borderTop: "3px solid #818cf8",
+              borderRadius: "50%",
+              margin: "0 auto 16px",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <p style={{ color: "#818cf8", fontSize: 14 }}>
+            Loading feedback data…
+          </p>
         </div>
       </div>
     );
-  }
 
-  const SENTIMENT_COLORS: Record<string, string> = {
-    Positive: "#6366f1",
-    Neutral: "#a78bfa",
-    Negative: "#f87171",
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    padding: "8px 18px",
+    borderRadius: 10,
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "all 0.2s",
+    background: active ? "rgba(129,140,248,0.22)" : "transparent",
+    color: active ? "#818cf8" : "#64748b",
+  });
+
+  const thStyle: React.CSSProperties = {
+    padding: "10px 14px",
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#64748b",
+    letterSpacing: "0.07em",
+    textTransform: "uppercase",
+    textAlign: "left",
+    borderBottom: "1px solid rgba(129,140,248,0.12)",
+    whiteSpace: "nowrap",
+    cursor: "pointer",
+    background: "rgba(15,12,40,0.9)",
+    userSelect: "none",
+  };
+  const tdStyle: React.CSSProperties = {
+    padding: "10px 14px",
+    borderBottom: "1px solid rgba(129,140,248,0.08)",
+    verticalAlign: "middle",
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-gray-950/80 backdrop-blur border-b border-purple-500/20 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(160deg,#0a0a1a 0%,#0d0b23 50%,#0a0a1a 100%)",
+        color: "#f1f5f9",
+      }}
+    >
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:rgba(129,140,248,0.05)}
+        ::-webkit-scrollbar-thumb{background:rgba(129,140,248,0.3);border-radius:99px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,0.5)}
+        input::placeholder{color:#475569}
+      `}</style>
+
+      {/* ── Sticky Header ── */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          background: "rgba(10,10,26,0.92)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(129,140,248,0.18)",
+          padding: "14px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/admin/dashboard")}
-            className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+            style={{
+              color: "#818cf8",
+              gap: 6,
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft size={15} /> Back
           </Button>
-          <div className="w-px h-6 bg-purple-500/30" />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
+          <div
+            style={{
+              width: 1,
+              height: 22,
+              background: "rgba(129,140,248,0.25)",
+            }}
+          />
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: 800,
+              background: "linear-gradient(90deg,#fff,#c4b5fd)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
             Feedback Analytics
-          </h1>
+          </span>
+          <span
+            style={{
+              fontSize: 12,
+              color: "#64748b",
+              background: "rgba(129,140,248,0.1)",
+              border: "1px solid rgba(129,140,248,0.2)",
+              borderRadius: 20,
+              padding: "2px 10px",
+            }}
+          >
+            {feedbacks.length} responses
+          </span>
         </div>
-        <span className="text-xs text-gray-500 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
-          {feedbacks.length} responses
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              background: "rgba(129,140,248,0.08)",
+              border: "1px solid rgba(129,140,248,0.15)",
+              borderRadius: 12,
+              padding: 4,
+              gap: 2,
+            }}
+          >
+            <button
+              style={tabBtnStyle(tab === "charts")}
+              onClick={() => setTab("charts")}
+            >
+              <BarChart3 size={14} />
+              Charts
+            </button>
+            <button
+              style={tabBtnStyle(tab === "table")}
+              onClick={() => setTab("table")}
+            >
+              <TableIcon size={14} />
+              Grid View
+            </button>
+          </div>
+          <button
+            onClick={exportExcel}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "8px 16px",
+              borderRadius: 10,
+              background: "rgba(74,222,128,0.12)",
+              border: "1px solid rgba(74,222,128,0.3)",
+              color: "#4ade80",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <Download size={14} /> Export Excel
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div
+        style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 20px 60px" }}
+      >
+        {/* Stat Cards — always visible */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+            gap: 14,
+            marginBottom: 28,
+          }}
+        >
           <StatCard
-            icon={<Users className="h-5 w-5 text-indigo-300" />}
+            icon={<Users size={20} color="#818cf8" />}
             label="Total Responses"
             value={feedbacks.length}
             sub="All submissions"
-            color="bg-indigo-500/20"
+            bg="rgba(129,140,248,0.18)"
           />
           <StatCard
-            icon={<TrendingUp className="h-5 w-5 text-purple-300" />}
+            icon={<TrendingUp size={20} color="#a78bfa" />}
             label="Avg Score"
-            value={overallAvg.toFixed(2) + " / 5"}
+            value={`${overallAvg.toFixed(2)} / 5`}
             sub="Across all questions"
-            color="bg-purple-500/20"
+            bg="rgba(167,139,250,0.18)"
           />
           <StatCard
-            icon={<Award className="h-5 w-5 text-pink-300" />}
+            icon={<Award size={20} color="#4ade80" />}
             label="Satisfaction"
-            value={satisfactionPct + "%"}
+            value={`${satisfactionPct}%`}
             sub="Overall satisfaction rate"
-            color="bg-pink-500/20"
+            bg="rgba(74,222,128,0.18)"
           />
           <StatCard
-            icon={<MessageSquare className="h-5 w-5 text-violet-300" />}
+            icon={<MessageSquare size={20} color="#f472b6" />}
             label="With Remarks"
             value={feedbacks.filter((f) => f.remarks?.trim()).length}
-            sub="Written responses"
-            color="bg-violet-500/20"
+            sub="Written comments"
+            bg="rgba(244,114,182,0.18)"
           />
         </div>
 
-        {/* Row 1: Avg Score Bar + Sentiment Pie */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Average Score per Question — Bar Chart */}
-          <Card className="lg:col-span-2 bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                📊 Average Score per Question
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                Score out of 5 — higher is better
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+        {/* ════ CHARTS TAB ════ */}
+        {tab === "charts" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Row 1: Avg Score Bar + Sentiment Donut */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                gap: 20,
+              }}
+            >
+              <ChartCard
+                title="📊 Average Score per Question"
+                sub="Score out of 5 — higher is better"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={avgScores}
+                    margin={{ top: 4, right: 8, left: -20, bottom: 10 }}
+                  >
+                    <defs>
+                      <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#818cf8" stopOpacity={1} />
+                        <stop
+                          offset="100%"
+                          stopColor="#c084fc"
+                          stopOpacity={1}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(129,140,248,0.08)"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="shortName"
+                      tick={{ fill: "#94a3b8", fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      domain={[0, 5]}
+                      tick={{ fill: "#64748b", fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      content={<Tip />}
+                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
+                    />
+                    <Bar
+                      dataKey="avg"
+                      name="Avg Score"
+                      fill="url(#grad1)"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={44}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="🎯 Overall Sentiment"
+                sub="Positive / Neutral / Negative"
+              >
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie
+                      data={sentimentData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={52}
+                      outerRadius={78}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {sentimentData.map((e) => (
+                        <Cell
+                          key={e.name}
+                          fill={C.sentiment[e.name] || "#818cf8"}
+                          stroke="transparent"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<Tip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                    gap: 10,
+                    marginTop: 8,
+                  }}
+                >
+                  {sentimentData.map((e) => (
+                    <LegendDot
+                      key={e.name}
+                      color={C.sentiment[e.name] || "#818cf8"}
+                      label={e.name}
+                      value={e.value}
+                    />
+                  ))}
+                </div>
+              </ChartCard>
+            </div>
+
+            {/* Row 2: Radar + Q10 horizontal bar */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 20,
+              }}
+            >
+              <ChartCard
+                title="🕸️ Competency Radar"
+                sub="Normalized 0–100 score across dimensions"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <RadarChart
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="70%"
+                    data={radarData}
+                  >
+                    <PolarGrid stroke="rgba(129,140,248,0.12)" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{ fill: "#94a3b8", fontSize: 11 }}
+                    />
+                    <PolarRadiusAxis
+                      angle={30}
+                      domain={[0, 100]}
+                      tick={{ fill: "#64748b", fontSize: 9 }}
+                    />
+                    <Radar
+                      name="Score"
+                      dataKey="score"
+                      stroke={C.radar}
+                      fill={C.radar}
+                      fillOpacity={0.22}
+                      strokeWidth={2}
+                    />
+                    <Tooltip content={<Tip />} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="🔮 Future Participation Intent"
+                sub="Q10: Likelihood to participate again"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={q10Data}
+                    layout="vertical"
+                    margin={{ left: 8, right: 28, top: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(129,140,248,0.08)"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={{ fill: "#64748b", fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      tick={{ fill: "#94a3b8", fontSize: 11 }}
+                      width={90}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      content={<Tip />}
+                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Responses"
+                      radius={[0, 6, 6, 0]}
+                      maxBarSize={28}
+                    >
+                      {q10Data.map((_, i) => (
+                        <Cell key={i} fill={C.bars[i % C.bars.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+
+            {/* Row 3: Branch bar + two mini pies */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                gap: 20,
+              }}
+            >
+              <ChartCard
+                title="🏛️ Responses by Branch"
+                sub="Submissions per engineering branch"
+              >
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart
+                    data={branchData}
+                    margin={{ top: 4, right: 8, left: -20, bottom: 10 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(129,140,248,0.08)"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="branch"
+                      tick={{ fill: "#94a3b8", fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: "#64748b", fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      content={<Tip />}
+                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Responses"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={44}
+                    >
+                      {branchData.map((e) => (
+                        <Cell
+                          key={e.branch}
+                          fill={C.branch[e.branch] || "#818cf8"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 20 }}
+              >
+                <ChartCard title="👥 Participant Type">
+                  <ResponsiveContainer width="100%" height={130}>
+                    <PieChart>
+                      <Pie
+                        data={participantData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={34}
+                        outerRadius={55}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {participantData.map((_, i) => (
+                          <Cell
+                            key={i}
+                            fill={C.pie1[i % C.pie1.length]}
+                            stroke="transparent"
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<Tip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                      gap: 8,
+                      marginTop: 4,
+                    }}
+                  >
+                    {participantData.map((e, i) => (
+                      <LegendDot
+                        key={e.name}
+                        color={C.pie1[i % C.pie1.length]}
+                        label={e.name}
+                        value={e.value}
+                      />
+                    ))}
+                  </div>
+                </ChartCard>
+
+                <ChartCard title="🪪 CSI Members">
+                  <ResponsiveContainer width="100%" height={110}>
+                    <PieChart>
+                      <Pie
+                        data={csiData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={48}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {csiData.map((e) => (
+                          <Cell
+                            key={e.name}
+                            fill={C.csi[e.name] || "#818cf8"}
+                            stroke="transparent"
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<Tip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                      gap: 8,
+                      marginTop: 4,
+                    }}
+                  >
+                    {csiData.map((e) => (
+                      <LegendDot
+                        key={e.name}
+                        color={C.csi[e.name] || "#818cf8"}
+                        label={e.name}
+                        value={e.value}
+                      />
+                    ))}
+                  </div>
+                </ChartCard>
+              </div>
+            </div>
+
+            {/* Row 4: Year */}
+            <ChartCard
+              title="🎓 Responses by Year"
+              sub="Academic year-wise distribution"
+            >
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart
-                  data={avgScoresData}
-                  margin={{ top: 4, right: 16, left: -16, bottom: 60 }}
+                  data={yearData}
+                  margin={{ top: 4, right: 8, left: -20, bottom: 4 }}
                 >
                   <defs>
-                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={BAR_GRADIENT_START} />
-                      <stop offset="100%" stopColor={BAR_GRADIENT_END} />
+                    <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#818cf8" stopOpacity={1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.05)"
+                    stroke="rgba(129,140,248,0.08)"
+                    vertical={false}
                   />
                   <XAxis
-                    dataKey="full"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                    tickFormatter={(v: string) =>
-                      v.replace("Q", "").split(":")[0]
-                    }
-                    interval={0}
-                    angle={-35}
-                    textAnchor="end"
+                    dataKey="year"
+                    tick={{ fill: "#94a3b8", fontSize: 13 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <YAxis
-                    domain={[0, 5]}
-                    tick={{ fill: "#9ca3af", fontSize: 11 }}
-                  />
-                  <Tooltip content={<CustomBarTooltip />} />
-                  <Bar
-                    dataKey="avg"
-                    name="Avg Score"
-                    fill="url(#barGrad)"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Sentiment Pie */}
-          <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                🎯 Overall Sentiment
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                Positive / Neutral / Negative
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={sentimentPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {sentimentPieData.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={SENTIMENT_COLORS[entry.name] || "#6366f1"}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomBarTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex flex-wrap justify-center gap-3 mt-2">
-                {sentimentPieData.map((entry) => (
-                  <div
-                    key={entry.name}
-                    className="flex items-center gap-1.5 text-xs text-gray-300"
-                  >
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ background: SENTIMENT_COLORS[entry.name] }}
-                    />
-                    {entry.name}:{" "}
-                    <span className="font-semibold text-white">
-                      {entry.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Row 2: Radar + Q10 Bar */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Radar Chart */}
-          <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                🕸️ Competency Radar
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                Normalized score (0–100) across learning dimensions
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <RadarChart
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="70%"
-                  data={radarData}
-                >
-                  <PolarGrid stroke="rgba(255,255,255,0.07)" />
-                  <PolarAngleAxis
-                    dataKey="subject"
-                    tick={{ fill: "#9ca3af", fontSize: 10 }}
-                  />
-                  <PolarRadiusAxis
-                    angle={30}
-                    domain={[0, 100]}
-                    tick={{ fill: "#6b7280", fontSize: 9 }}
-                  />
-                  <Radar
-                    name="Score"
-                    dataKey="score"
-                    stroke="#8b5cf6"
-                    fill="#8b5cf6"
-                    fillOpacity={0.25}
-                    strokeWidth={2}
-                  />
-                  <Tooltip content={<CustomBarTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Q10 — Future Participation */}
-          <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                🔮 Future Participation Intent
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                How likely are participants to join again?
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={q10Data}
-                  layout="vertical"
-                  margin={{ left: 16, right: 24, top: 4, bottom: 4 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.05)"
-                    horizontal={false}
-                  />
-                  <XAxis
-                    type="number"
-                    tick={{ fill: "#9ca3af", fontSize: 11 }}
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
                     allowDecimals={false}
                   />
-                  <YAxis
-                    type="category"
-                    dataKey="label"
-                    tick={{ fill: "#d1d5db", fontSize: 11 }}
-                    width={90}
+                  <Tooltip
+                    content={<Tip />}
+                    cursor={{ fill: "rgba(129,140,248,0.07)" }}
                   />
-                  <Tooltip content={<CustomBarTooltip />} />
                   <Bar
                     dataKey="count"
                     name="Responses"
-                    fill="#6366f1"
-                    radius={[0, 6, 6, 0]}
-                  >
-                    {q10Data.map((entry, index) => (
-                      <Cell
-                        key={entry.label}
-                        fill={`hsl(${250 + index * 18}, 70%, ${60 - index * 5}%)`}
-                      />
-                    ))}
-                  </Bar>
+                    fill="url(#grad2)"
+                    radius={[8, 8, 0, 0]}
+                    maxBarSize={60}
+                  />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+            </ChartCard>
 
-        {/* Row 3: Branch Bar + Participant Pie + CSI Pie */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Branch distribution */}
-          <Card className="lg:col-span-2 bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                🏛️ Responses by Branch
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                Number of feedback submissions per engineering branch
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={230}>
-                <BarChart
-                  data={branchBarData}
-                  margin={{ top: 4, right: 16, left: -16, bottom: 10 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.05)"
-                  />
-                  <XAxis
-                    dataKey="branch"
-                    tick={{ fill: "#d1d5db", fontSize: 12 }}
-                  />
-                  <YAxis
-                    tick={{ fill: "#9ca3af", fontSize: 11 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomBarTooltip />} />
-                  <Bar dataKey="count" name="Responses" radius={[6, 6, 0, 0]}>
-                    {branchBarData.map((entry) => (
-                      <Cell
-                        key={entry.branch}
-                        fill={BRANCH_COLORS[entry.branch] || "#6366f1"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Participant Type Pie */}
-          <div className="space-y-6 flex flex-col">
-            <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur flex-1">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-semibold text-purple-200">
-                  👥 Participant Type
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={120}>
-                  <PieChart>
-                    <Pie
-                      data={participantPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={50}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {participantPieData.map((_, i) => (
-                        <Cell
-                          key={i}
-                          fill={PIE_COLORS[i % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomBarTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap justify-center gap-2 mt-1">
-                  {participantPieData.map((entry, i) => (
-                    <div
-                      key={entry.name}
-                      className="flex items-center gap-1 text-xs text-gray-300"
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          background: PIE_COLORS[i % PIE_COLORS.length],
-                        }}
-                      />
-                      {entry.name}:{" "}
-                      <span className="font-bold text-white">
-                        {entry.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* CSI Member Pie */}
-            <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur flex-1">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-semibold text-purple-200">
-                  🪪 CSI Members
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={120}>
-                  <PieChart>
-                    <Pie
-                      data={csiPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={50}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {csiPieData.map((entry, i) => (
-                        <Cell
-                          key={i}
-                          fill={entry.name === "Yes" ? "#6366f1" : "#f87171"}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomBarTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap justify-center gap-2 mt-1">
-                  {csiPieData.map((entry) => (
-                    <div
-                      key={entry.name}
-                      className="flex items-center gap-1 text-xs text-gray-300"
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          background:
-                            entry.name === "Yes" ? "#6366f1" : "#f87171",
-                        }}
-                      />
-                      {entry.name}:{" "}
-                      <span className="font-bold text-white">
-                        {entry.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Row 4: Year distribution */}
-        <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-purple-200">
-              🎓 Responses by Year
-            </CardTitle>
-            <p className="text-xs text-gray-400">
-              Academic year-wise breakdown of feedback submissions
-            </p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart
-                data={yearBarData}
-                margin={{ top: 4, right: 16, left: -16, bottom: 10 }}
+            {/* Remarks */}
+            {feedbacks.filter((f) => f.remarks?.trim()).length > 0 && (
+              <ChartCard
+                title="💬 Recent Remarks"
+                sub="Latest written feedback from participants"
               >
-                <defs>
-                  <linearGradient id="yearGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ec4899" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.05)"
-                />
-                <XAxis
-                  dataKey="year"
-                  tick={{ fill: "#d1d5db", fontSize: 13 }}
-                />
-                <YAxis
-                  tick={{ fill: "#9ca3af", fontSize: 11 }}
-                  allowDecimals={false}
-                />
-                <Tooltip content={<CustomBarTooltip />} />
-                <Bar
-                  dataKey="count"
-                  name="Responses"
-                  fill="url(#yearGrad)"
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))",
+                    gap: 12,
+                    maxHeight: 280,
+                    overflowY: "auto",
+                    paddingRight: 4,
+                  }}
+                >
+                  {feedbacks
+                    .filter((f) => f.remarks?.trim())
+                    .slice(-10)
+                    .reverse()
+                    .map((f) => (
+                      <div
+                        key={f.id}
+                        style={{
+                          background: "rgba(129,140,248,0.06)",
+                          border: "1px solid rgba(129,140,248,0.12)",
+                          borderRadius: 12,
+                          padding: "12px 14px",
+                        }}
+                      >
+                        <p
+                          style={{
+                            margin: "0 0 8px",
+                            fontSize: 13,
+                            color: "#cbd5e1",
+                            lineHeight: 1.6,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          "{f.remarks}"
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 11,
+                            color: "#818cf8",
+                            fontWeight: 600,
+                          }}
+                        >
+                          — {f.personalInfo.fullName} · {f.academicInfo?.branch}{" "}
+                          {f.academicInfo?.year}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </ChartCard>
+            )}
+          </div>
+        )}
 
-        {/* Recent Remarks */}
-        {feedbacks.filter((f) => f.remarks?.trim()).length > 0 && (
-          <Card className="bg-gray-900/60 border-purple-500/20 backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-purple-200">
-                💬 Recent Remarks
-              </CardTitle>
-              <p className="text-xs text-gray-400">
-                Latest written feedback from participants
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
-                {feedbacks
-                  .filter((f) => f.remarks?.trim())
-                  .slice(-8)
-                  .reverse()
-                  .map((f) => (
-                    <div
-                      key={f.id}
-                      className="bg-gray-800/60 border border-purple-500/10 rounded-xl p-3"
-                    >
-                      <p className="text-sm text-gray-200 leading-relaxed line-clamp-3">
-                        &ldquo;{f.remarks}&rdquo;
-                      </p>
-                      <p className="text-xs text-purple-400 mt-2 font-medium">
-                        — {f.personalInfo.fullName} · {f.academicInfo?.branch}{" "}
-                        {f.academicInfo?.year}
-                      </p>
-                    </div>
-                  ))}
+        {/* ════ TABLE / GRID VIEW TAB ════ */}
+        {tab === "table" && (
+          <div>
+            {/* Search bar */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 14,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ position: "relative", flex: 1, minWidth: 240 }}>
+                <Search
+                  size={14}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#475569",
+                  }}
+                />
+                <input
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  placeholder="Search name, email, branch…"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px 9px 36px",
+                    background: "rgba(129,140,248,0.08)",
+                    border: "1px solid rgba(129,140,248,0.2)",
+                    borderRadius: 10,
+                    color: "#e2e8f0",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                {globalFilter && (
+                  <button
+                    onClick={() => setGlobalFilter("")}
+                    style={{
+                      position: "absolute",
+                      right: 10,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#64748b",
+                      display: "flex",
+                    }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
-            </CardContent>
-          </Card>
+              <span
+                style={{ fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}
+              >
+                {table.getFilteredRowModel().rows.length} of {feedbacks.length}{" "}
+                entries
+              </span>
+            </div>
+
+            {/* Q key reference */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                marginBottom: 14,
+              }}
+            >
+              {Q_LABELS.map((q) => (
+                <span
+                  key={q.key}
+                  style={{
+                    fontSize: 11,
+                    color: "#818cf8",
+                    background: "rgba(129,140,248,0.1)",
+                    border: "1px solid rgba(129,140,248,0.18)",
+                    borderRadius: 6,
+                    padding: "2px 8px",
+                  }}
+                >
+                  {q.short}: {q.label}
+                </span>
+              ))}
+            </div>
+
+            {/* Table */}
+            <div
+              style={{
+                overflowX: "auto",
+                borderRadius: 14,
+                border: "1px solid rgba(129,140,248,0.15)",
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 13,
+                }}
+              >
+                <thead>
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id}>
+                      {hg.headers.map((h) => (
+                        <th
+                          key={h.id}
+                          style={thStyle}
+                          onClick={h.column.getToggleSortingHandler()}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            {flexRender(
+                              h.column.columnDef.header,
+                              h.getContext(),
+                            )}
+                            {h.column.getIsSorted() === "asc" && (
+                              <span style={{ color: "#818cf8", fontSize: 10 }}>
+                                ▲
+                              </span>
+                            )}
+                            {h.column.getIsSorted() === "desc" && (
+                              <span style={{ color: "#818cf8", fontSize: 10 }}>
+                                ▼
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row, ri) => (
+                    <tr
+                      key={row.id}
+                      style={{
+                        background:
+                          ri % 2 === 0
+                            ? "rgba(15,12,40,0.5)"
+                            : "rgba(129,140,248,0.03)",
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} style={tdStyle}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  {table.getRowModel().rows.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          ...tdStyle,
+                          textAlign: "center",
+                          color: "#64748b",
+                          padding: "40px 0",
+                        }}
+                      >
+                        No entries found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: 14,
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 12, color: "#64748b" }}>
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount() || 1}
+              </span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[
+                  {
+                    l: "«",
+                    fn: () => table.setPageIndex(0),
+                    d: !table.getCanPreviousPage(),
+                  },
+                  {
+                    l: "‹",
+                    fn: () => table.previousPage(),
+                    d: !table.getCanPreviousPage(),
+                  },
+                  {
+                    l: "›",
+                    fn: () => table.nextPage(),
+                    d: !table.getCanNextPage(),
+                  },
+                  {
+                    l: "»",
+                    fn: () => table.setPageIndex(table.getPageCount() - 1),
+                    d: !table.getCanNextPage(),
+                  },
+                ].map((b) => (
+                  <button
+                    key={b.l}
+                    onClick={b.fn}
+                    disabled={b.d}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(129,140,248,0.2)",
+                      background: b.d ? "transparent" : "rgba(129,140,248,0.1)",
+                      color: b.d ? "#334155" : "#818cf8",
+                      cursor: b.d ? "not-allowed" : "pointer",
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {b.l}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={table.getState().pagination.pageSize}
+                onChange={(e) => table.setPageSize(Number(e.target.value))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(129,140,248,0.2)",
+                  background: "rgba(15,12,40,0.8)",
+                  color: "#94a3b8",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                {[10, 15, 25, 50].map((s) => (
+                  <option key={s} value={s}>
+                    {s} per page
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         )}
       </div>
     </div>
