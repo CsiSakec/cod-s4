@@ -6,6 +6,8 @@ import { database } from "@/firebaseConfig";
 import { ref, onValue, update, remove, get } from "firebase/database";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart2 } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -175,16 +177,16 @@ export default function AdminDashboard() {
   ) => {
     try {
       const participantRef = ref(database, `registrations/${participantId}`);
-      
+
       let qrToken = "";
       let qrCodeDataURL = "";
 
       if (newStatus === "approved") {
         qrToken = generateQRToken();
         qrCodeDataURL = await generateQRCodeDataURL(qrToken);
-        await update(participantRef, { 
+        await update(participantRef, {
           status: newStatus,
-          qrToken: qrToken
+          qrToken: qrToken,
         });
       } else {
         await update(participantRef, { status: newStatus });
@@ -480,6 +482,14 @@ export default function AdminDashboard() {
 
             {/* Buttons */}
             <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/admin/feedback-analysis")}
+                className="flex-1 sm:flex-none bg-indigo-600/10 border-indigo-600/30 hover:bg-indigo-600/20 text-indigo-400"
+              >
+                <BarChart2 className="mr-2 h-4 w-4" />
+                Feedback Analysis
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push("/admin/scanner")}
