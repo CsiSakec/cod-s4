@@ -1,161 +1,157 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { database } from "@/firebaseConfig";
-import { ref, onValue } from "firebase/database";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  Users,
-  TrendingUp,
-  Award,
-  MessageSquare,
-  Download,
-  BarChart3,
-  TableIcon,
-  Search,
-  X,
-} from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  flexRender,
-  createColumnHelper,
-  SortingState,
-} from "@tanstack/react-table";
-import * as XLSX from "xlsx";
+import { ref, set } from "firebase/database";
 
-/* ─────────────────────────────────────────────
-   Types
-───────────────────────────────────────────── */
-interface FeedbackEntry {
-  id: string;
-  submittedAt: string;
-  personalInfo: {
-    fullName: string;
-    email: string;
-    contact?: string;
-    isCsiMember: string;
-    participantType: string;
-  };
-  academicInfo: {
-    branch: string;
-    year: string;
-    division?: string;
-    rollNo?: string;
-    prn?: string;
-    college?: string;
-  };
-  feedbackResponses: {
-    q1_engineeringKnowledge: string;
-    q2_technicalTools: string;
-    q3_problemSolving: string;
-    q4_teamwork: string;
-    q5_modernTools: string;
-    q6_lifelongLearning: string;
-    q7_ethicalPractices: string;
-    q8_entrepreneurship: string;
-    q9_skillsEquipped: string;
-    q10_futureParticipation: string;
-  };
-  remarks: string;
+/* ──── Floating Particle ──── */
+function Particle({ style }: { style: React.CSSProperties }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        borderRadius: "50%",
+        pointerEvents: "none",
+        ...style,
+      }}
+    />
+  );
 }
 
-/* ─────────────────────────────────────────────
-   Constants
-───────────────────────────────────────────── */
-const Q_LABELS = [
-  {
-    key: "q1_engineeringKnowledge",
-    short: "Q1",
-    label: "Engineering Knowledge",
-  },
-  { key: "q2_technicalTools", short: "Q2", label: "Technical Tools" },
-  { key: "q3_problemSolving", short: "Q3", label: "Problem Solving" },
-  { key: "q4_teamwork", short: "Q4", label: "Teamwork" },
-  { key: "q5_modernTools", short: "Q5", label: "Modern Tools" },
-  { key: "q6_lifelongLearning", short: "Q6", label: "Lifelong Learning" },
-  { key: "q7_ethicalPractices", short: "Q7", label: "Ethical Practices" },
-  { key: "q8_entrepreneurship", short: "Q8", label: "Entrepreneurship" },
-  { key: "q9_skillsEquipped", short: "Q9", label: "Skills Equipped" },
-  {
-    key: "q10_futureParticipation",
-    short: "Q10",
-    label: "Future Participation",
-  },
+/* ──── Radio Group ──── */
+function RadioGroup({
+  name,
+  options,
+  value,
+  onChange,
+}: {
+  name: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
+      {options.map((opt) => {
+        const selected = value === opt;
+        return (
+          <label
+            key={opt}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              cursor: "pointer",
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: `1px solid ${selected ? "rgba(167,139,250,0.7)" : "rgba(124,92,252,0.2)"}`,
+              background: selected
+                ? "rgba(124,92,252,0.18)"
+                : "rgba(255,255,255,0.03)",
+              color: selected ? "#c4b5fd" : "rgba(200,200,230,0.75)",
+              fontSize: 13,
+              fontWeight: selected ? 600 : 400,
+              transition: "all 0.2s ease",
+              userSelect: "none",
+            }}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={opt}
+              checked={selected}
+              onChange={() => onChange(opt)}
+              style={{ display: "none" }}
+            />
+            <span
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: "50%",
+                border: `2px solid ${selected ? "#a78bfa" : "rgba(124,92,252,0.4)"}`,
+                background: selected ? "#a78bfa" : "transparent",
+                display: "inline-block",
+                flexShrink: 0,
+                transition: "all 0.2s ease",
+              }}
+            />
+            {opt}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ──── Field Wrapper ──── */
+function Field({
+  label,
+  required,
+  children,
+  error,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  error?: string;
+}) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <label
+        style={{
+          display: "block",
+          fontSize: 13,
+          fontWeight: 600,
+          color: "rgba(196,181,253,0.85)",
+          marginBottom: 7,
+          letterSpacing: 0.3,
+        }}
+      >
+        {label}
+        {required && <span style={{ color: "#f87171", marginLeft: 3 }}>*</span>}
+      </label>
+      {children}
+      {error && (
+        <p style={{ color: "#f87171", fontSize: 12, marginTop: 5 }}>{error}</p>
+      )}
+    </div>
+  );
+}
+
+/* ──── Shared input/select styles ──── */
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "11px 14px",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(124,92,252,0.25)",
+  borderRadius: 10,
+  color: "#e2e2f0",
+  fontSize: 14,
+  outline: "none",
+  transition: "border-color 0.2s",
+  boxSizing: "border-box",
+  fontFamily: "inherit",
+};
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  cursor: "pointer",
+  appearance: "none" as const,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a78bfa' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+  paddingRight: 36,
+};
+
+/* ──── Feedback question data ──── */
+const SCALE_OPTIONS = [
+  "Strongly Agree",
+  "Agree",
+  "Neutral",
+  "Disagree",
+  "Strongly Disagree",
 ];
-
-const SCORE_MAP: Record<string, number> = {
-  "Strongly Agree": 5,
-  Agree: 4,
-  Neutral: 3,
-  Disagree: 2,
-  "Strongly Disagree": 1,
-  "Very Likely": 5,
-  Likely: 4,
-  Unlikely: 2,
-  "Very Unlikely": 1,
-};
-
-// Fully explicit solid colors — no CSS vars, no opacity in fill
-const C = {
-  bars: [
-    "#818cf8",
-    "#a78bfa",
-    "#c084fc",
-    "#e879f9",
-    "#f472b6",
-    "#fb7185",
-    "#f97316",
-    "#facc15",
-    "#4ade80",
-    "#22d3ee",
-  ],
-  pie1: ["#818cf8", "#f472b6", "#4ade80", "#facc15", "#22d3ee"],
-  sentiment: {
-    Positive: "#4ade80",
-    Neutral: "#facc15",
-    Negative: "#f87171",
-  } as Record<string, string>,
-  csi: { Yes: "#818cf8", No: "#f87171" } as Record<string, string>,
-  branch: {
-    COMPS: "#818cf8",
-    IT: "#a78bfa",
-    "AI-DS": "#f472b6",
-    CYSE: "#facc15",
-    ECS: "#4ade80",
-    EXTC: "#22d3ee",
-    ACT: "#f97316",
-    VLSI: "#fb7185",
-  } as Record<string, string>,
-  year: ["#818cf8", "#e879f9", "#4ade80", "#f97316"],
-  radar: "#a78bfa",
-};
-
-const BRANCHES = ["COMPS", "IT", "AI-DS", "CYSE", "ECS", "EXTC", "ACT", "VLSI"];
-const YEARS = ["FE", "SE", "TE", "BTech"];
-const LIKELIHOOD = [
+const LIKELIHOOD_OPTIONS = [
   "Very Likely",
   "Likely",
   "Neutral",
@@ -163,1575 +159,1244 @@ const LIKELIHOOD = [
   "Very Unlikely",
 ];
 
-/* ─────────────────────────────────────────────
-   Helpers
-───────────────────────────────────────────── */
-const avg = (nums: number[]) =>
-  nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
-const countBy = <T,>(
-  arr: T[],
-  key: (item: T) => string,
-): Record<string, number> =>
-  arr.reduce<Record<string, number>>((acc, item) => {
-    const k = key(item);
-    acc[k] = (acc[k] || 0) + 1;
-    return acc;
-  }, {});
+const FEEDBACK_QUESTIONS = [
+  {
+    id: "q1",
+    text: "Did the event enhance your knowledge of core engineering concepts and their practical applications?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q2",
+    text: "Were the technical tools and methods demonstrated during the event relevant and useful?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q3",
+    text: "Did the event help you in analyzing and solving real-world engineering problems?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q4",
+    text: "Did you find opportunities to work collaboratively and enhance your teamwork skills during the event?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q5",
+    text: "Were you able to apply modern engineering tools or techniques effectively during the event?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q6",
+    text: "Did the event inspire you to pursue lifelong learning in the context of technological advancements?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q7",
+    text: "Did the event address ethical practices and social responsibilities in engineering?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q8",
+    text: "Did the event motivate you to explore entrepreneurial or research-oriented opportunities?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q9",
+    text: "Do you feel that the event has equipped you with the skills and knowledge to solve real-world problems effectively?",
+    options: SCALE_OPTIONS,
+  },
+  {
+    id: "q10",
+    text: "How likely are you to participate in similar technical events in the future?",
+    options: LIKELIHOOD_OPTIONS,
+  },
+];
 
-/* ─────────────────────────────────────────────
-   Custom Tooltip
-───────────────────────────────────────────── */
-const Tip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div
-      style={{
-        background: "#1e1b4b",
-        border: "1px solid #4c1d95",
-        borderRadius: 10,
-        padding: "10px 14px",
-        fontSize: 13,
-      }}
-    >
-      {label && (
-        <p style={{ color: "#c4b5fd", fontWeight: 700, marginBottom: 4 }}>
-          {label}
-        </p>
-      )}
-      {payload.map((p: any) => (
-        <p
-          key={p.name}
-          style={{
-            color: typeof p.fill === "string" ? p.fill : "#e2e8f0",
-            margin: "2px 0",
-          }}
-        >
-          {p.name}:{" "}
-          <strong style={{ color: "#fff" }}>
-            {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
-          </strong>
-        </p>
-      ))}
-    </div>
-  );
-};
-
-/* ─────────────────────────────────────────────
-   Stat Card
-───────────────────────────────────────────── */
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-  bg,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  sub?: string;
-  bg: string;
+/* ──── Email HTML builder ──── */
+function buildEmailHtml(params: {
+  name: string;
+  feedbackId: string;
+  participantType: string;
+  branch: string;
+  year: string;
+  division?: string;
+  rollNo?: string;
+  prn?: string;
+  college?: string;
+  isCsiMember: string;
+  feedbackResponses: Record<string, string>;
+  remarks: string;
 }) {
-  return (
-    <div
-      style={{
-        background: "rgba(30,27,75,0.7)",
-        border: "1px solid rgba(129,140,248,0.25)",
-        borderRadius: 16,
-        padding: "18px 20px",
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
-          background: bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </div>
-      <div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 11,
-            color: "#94a3b8",
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          {label}
-        </p>
-        <p
-          style={{
-            margin: "2px 0 0",
-            fontSize: 22,
-            fontWeight: 800,
-            color: "#f1f5f9",
-          }}
-        >
-          {value}
-        </p>
-        {sub && (
-          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#818cf8" }}>
-            {sub}
-          </p>
-        )}
-      </div>
-    </div>
-  );
+  const {
+    name,
+    feedbackId,
+    participantType,
+    branch,
+    year,
+    division,
+    rollNo,
+    prn,
+    college,
+    isCsiMember,
+    feedbackResponses,
+    remarks,
+  } = params;
+
+  const isIntra = participantType === "Intra";
+
+  const responseRows = FEEDBACK_QUESTIONS.map(
+    (q, i) => `
+    <tr style="background:${i % 2 === 0 ? "#f8f9fa" : "#ffffff"};">
+      <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eee;width:72%;">${i + 1}. ${q.text}</td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#7c5cfc;border-bottom:1px solid #eee;white-space:nowrap;">${feedbackResponses[`q${i + 1}`] || "—"}</td>
+    </tr>
+  `,
+  ).join("");
+
+  return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f4f4f8;border-radius:12px;">
+
+  <!-- Card -->
+
+  <div style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+
+
+<!-- Header -->
+<div style="background:linear-gradient(135deg,#7c5cfc,#a78bfa);padding:30px;text-align:center;">
+  <div style="font-size:42px;margin-bottom:10px;">🎉</div>
+  <h1 style="color:#fff;margin:0;font-size:22px;">Feedback Submitted Successfully</h1>
+</div>
+
+<!-- Body -->
+<div style="padding:30px 24px;text-align:center;">
+  
+  <p style="font-size:16px;color:#333;margin:0 0 12px;">
+    Dear <strong>${name}</strong>,
+  </p>
+
+  <p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 20px;">
+    Thank you for taking the time to share your feedback with us.  
+    Your thoughts truly help us improve and create better experiences in the future.
+  </p>
+
+  <p style="font-size:14px;color:#555;line-height:1.7;margin:0;">
+    We appreciate your support and look forward to seeing you again soon! 💜
+  </p>
+
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:18px;border-top:1px solid #eee;">
+  <p style="font-size:13px;color:#888;margin:0;">
+    Warm regards,<br/>
+    <strong style="color:#7c5cfc;">CSI-SAKEC Team</strong>
+  </p>
+</div>
+
+
+  </div>
+</div>
+`;
 }
 
-/* ─────────────────────────────────────────────
-   Chart Card
-───────────────────────────────────────────── */
-function ChartCard({
-  title,
-  sub,
-  children,
-}: {
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: "rgba(30,27,75,0.65)",
-        border: "1px solid rgba(129,140,248,0.2)",
-        borderRadius: 16,
-        padding: "20px 22px",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <p
-        style={{
-          margin: "0 0 2px",
-          fontSize: 14,
-          fontWeight: 700,
-          color: "#c4b5fd",
-        }}
-      >
-        {title}
-      </p>
-      {sub && (
-        <p style={{ margin: "0 0 14px", fontSize: 12, color: "#64748b" }}>
-          {sub}
-        </p>
-      )}
-      {!sub && <div style={{ marginBottom: 14 }} />}
-      {children}
-    </div>
-  );
-}
+/* ══════════════════════════════════════════════
+   MAIN PAGE COMPONENT
+══════════════════════════════════════════════ */
+export default function FeedbackPage() {
+  const [scrollY, setScrollY] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const [slide, setSlide] = useState<1 | 2>(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-/* ─────────────────────────────────────────────
-   Legend Dot
-───────────────────────────────────────────── */
-function LegendDot({
-  color,
-  label,
-  value,
-}: {
-  color: string;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        fontSize: 12,
-        color: "#94a3b8",
-      }}
-    >
-      <div
-        style={{
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: color,
-          flexShrink: 0,
-        }}
-      />
-      <span>{label}:</span>
-      <strong style={{ color: "#f1f5f9" }}>{value}</strong>
-    </div>
-  );
-}
+  /* ── Slide 1 fields ── */
+  const [details, setDetails] = useState({
+    fullName: "",
+    email: "",
+    contact: "",
+    csiMember: "",
+    participantType: "", // "Intra" | "Inter"
+    college: "", // Inter only
+    branch: "",
+    year: "",
+    division: "", // Intra only
+    rollNo: "", // Intra only
+    prn: "", // Intra only
+  });
 
-/* ─────────────────────────────────────────────
-   Score Badge
-───────────────────────────────────────────── */
-function ScoreBadge({ value }: { value: string }) {
-  const score = SCORE_MAP[value];
-  const palette: Record<number, { text: string; bg: string; border: string }> =
-    {
-      5: {
-        text: "#4ade80",
-        bg: "rgba(74,222,128,0.12)",
-        border: "rgba(74,222,128,0.35)",
-      },
-      4: {
-        text: "#a78bfa",
-        bg: "rgba(167,139,250,0.12)",
-        border: "rgba(167,139,250,0.35)",
-      },
-      3: {
-        text: "#facc15",
-        bg: "rgba(250,204,21,0.12)",
-        border: "rgba(250,204,21,0.35)",
-      },
-      2: {
-        text: "#f97316",
-        bg: "rgba(249,115,22,0.12)",
-        border: "rgba(249,115,22,0.35)",
-      },
-      1: {
-        text: "#f87171",
-        bg: "rgba(248,113,113,0.12)",
-        border: "rgba(248,113,113,0.35)",
-      },
-    };
-  if (!score) return <span style={{ color: "#64748b" }}>—</span>;
-  const p = palette[score];
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        padding: "2px 8px",
-        borderRadius: 20,
-        background: p.bg,
-        border: `1px solid ${p.border}`,
-        color: p.text,
-        fontSize: 11,
-        fontWeight: 600,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {value}
-    </span>
-  );
-}
+  /* ── Slide 2 fields ── */
+  const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const [remarks, setRemarks] = useState("");
 
-/* ─────────────────────────────────────────────
-   Main Component
-───────────────────────────────────────────── */
-export default function FeedbackAnalysis() {
-  const [feedbacks, setFeedbacks] = useState<FeedbackEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<"charts" | "table">("charts");
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const router = useRouter();
+  const isIntra = details.participantType === "Intra";
+  const isInter = details.participantType === "Inter";
 
+  const setDetail = (key: keyof typeof details, val: string) =>
+    setDetails((p) => ({ ...p, [key]: val }));
+
+  /* ── scroll / mount ── */
   useEffect(() => {
-    const ok = localStorage.getItem("adminAuthenticated") === "true";
-    if (!ok) {
-      router.push("/admin");
-      return;
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const t = setTimeout(() => setVisible(true), 80);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(t);
+    };
+  }, []);
+
+  const particles = [
+    {
+      top: "8%",
+      left: "4%",
+      width: 3,
+      height: 3,
+      background: "rgba(124,92,252,0.5)",
+      animation: "float1 6s ease-in-out infinite",
+    },
+    {
+      top: "18%",
+      right: "6%",
+      width: 5,
+      height: 5,
+      background: "rgba(167,139,250,0.3)",
+      animation: "float2 8s ease-in-out infinite",
+    },
+    {
+      top: "35%",
+      left: "8%",
+      width: 2,
+      height: 2,
+      background: "rgba(100,80,200,0.6)",
+      animation: "float3 5s ease-in-out infinite",
+    },
+    {
+      top: "55%",
+      right: "10%",
+      width: 4,
+      height: 4,
+      background: "rgba(124,92,252,0.4)",
+      animation: "float1 7s ease-in-out infinite 1s",
+    },
+    {
+      top: "75%",
+      left: "6%",
+      width: 3,
+      height: 3,
+      background: "rgba(167,139,250,0.35)",
+      animation: "float2 9s ease-in-out infinite 2s",
+    },
+    {
+      top: "88%",
+      right: "8%",
+      width: 4,
+      height: 4,
+      background: "rgba(100,80,200,0.5)",
+      animation: "float3 6s ease-in-out infinite 1.5s",
+    },
+  ];
+
+  /* ══ VALIDATION ══ */
+  const validateSlide1 = () => {
+    const e: Record<string, string> = {};
+    if (!details.fullName.trim()) e.fullName = "Full name is required";
+    if (!details.email.trim()) e.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(details.email))
+      e.email = "Enter a valid email";
+    if (!details.contact.trim()) e.contact = "Contact number is required";
+    else if (!/^\d{10}$/.test(details.contact))
+      e.contact = "Enter a valid 10-digit number";
+    if (!details.csiMember) e.csiMember = "Please select an option";
+    if (!details.participantType)
+      e.participantType = "Please select participant type";
+    if (isInter && !details.college.trim())
+      e.college = "College name is required";
+    if (!details.branch) e.branch = "Branch is required";
+    if (!details.year) e.year = "Year is required";
+    if (isIntra) {
+      if (!details.division.trim()) e.division = "Division is required";
+      if (!details.rollNo.trim()) e.rollNo = "Roll No is required";
+      if (!details.prn.trim()) e.prn = "PRN is required";
+      else if (!/^[A-Za-z0-9]{14}$/.test(details.prn))
+        e.prn = "PRN must be exactly 14 digits";
     }
-    const unsub = onValue(ref(database, "eventFeedback"), (snap) => {
-      setFeedbacks(
-        snap.val() ? (Object.values(snap.val()) as FeedbackEntry[]) : [],
-      );
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateSlide2 = () => {
+    const e: Record<string, string> = {};
+    FEEDBACK_QUESTIONS.forEach((q) => {
+      if (!feedback[q.id]) e[q.id] = "Please select an option";
+    });
+    if (!remarks.trim()) e.remarks = "Remarks are required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateSlide1()) {
+      setErrors({});
+      setSlide(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  /* ══ SUBMIT: Firebase + Email ══ */
+  const handleSubmit = async () => {
+    if (!validateSlide2()) return;
+
+    setIsLoading(true);
+    try {
+      const feedbackId = Date.now().toString();
+
+      /* ── Firebase payload ── */
+      const feedbackData = {
+        id: feedbackId,
+        submittedAt: new Date().toISOString(),
+        status: "submitted",
+
+        personalInfo: {
+          fullName: details.fullName,
+          email: details.email,
+          contact: details.contact,
+          isCsiMember: details.csiMember,
+          participantType: details.participantType,
+        },
+
+        academicInfo: {
+          branch: details.branch,
+          year: details.year,
+          // Intra-only fields
+          ...(isIntra && {
+            division: details.division,
+            rollNo: details.rollNo,
+            prn: details.prn,
+          }),
+          // Inter-only fields
+          ...(isInter && {
+            college: details.college,
+          }),
+        },
+
+        feedbackResponses: {
+          q1_engineeringKnowledge: feedback["q1"] || "",
+          q2_technicalTools: feedback["q2"] || "",
+          q3_problemSolving: feedback["q3"] || "",
+          q4_teamwork: feedback["q4"] || "",
+          q5_modernTools: feedback["q5"] || "",
+          q6_lifelongLearning: feedback["q6"] || "",
+          q7_ethicalPractices: feedback["q7"] || "",
+          q8_entrepreneurship: feedback["q8"] || "",
+          q9_skillsEquipped: feedback["q9"] || "",
+          q10_futureParticipation: feedback["q10"] || "",
+        },
+        remarks,
+      };
+
+      /* ── Save to Firebase Realtime DB ── */
+      const feedbackRef = ref(database, `eventFeedback/${feedbackId}`);
+      await set(feedbackRef, feedbackData);
+
+      /* ── Send confirmation email (mirrors /api/registeremail pattern) ── */
+      try {
+        await fetch("/api/registeremail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: details.email,
+            subject: "CSI-SAKEC Event Feedback – Submission Confirmed",
+            html: buildEmailHtml({
+              name: details.fullName,
+              feedbackId,
+              participantType: details.participantType,
+              branch: details.branch,
+              year: details.year,
+              division: details.division,
+              rollNo: details.rollNo,
+              prn: details.prn,
+              college: details.college,
+              isCsiMember: details.csiMember,
+              feedbackResponses: feedback,
+              remarks,
+            }),
+          }),
+        });
+      } catch (emailErr) {
+        // Email failure is non-blocking; data is already saved
+        console.error("Confirmation email failed:", emailErr);
+      }
+
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      alert("Something went wrong while submitting. Please try again.");
+    } finally {
       setIsLoading(false);
-    });
-    return () => unsub();
-  }, [router]);
-
-  /* ── Derived Chart Data ── */
-  const avgScores = Q_LABELS.map((q) => {
-    const scores = feedbacks
-      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]])
-      .filter(Boolean);
-    return {
-      name: `${q.short}: ${q.label}`,
-      shortName: q.short,
-      avg: parseFloat(avg(scores).toFixed(2)),
-    };
-  });
-
-  const allResponses = feedbacks.flatMap((f) =>
-    Object.values(f.feedbackResponses),
-  );
-  const sentimentData = (() => {
-    const cnt = countBy(allResponses, (r) => {
-      const s = SCORE_MAP[r];
-      if (!s) return "Unknown";
-      return s >= 4 ? "Positive" : s === 3 ? "Neutral" : "Negative";
-    });
-    return ["Positive", "Neutral", "Negative"]
-      .map((k) => ({ name: k, value: cnt[k] || 0 }))
-      .filter((d) => d.value > 0);
-  })();
-
-  const participantData = Object.entries(
-    countBy(feedbacks, (f) => f.personalInfo.participantType || "Unknown"),
-  ).map(([name, value]) => ({ name, value }));
-
-  const csiData = Object.entries(
-    countBy(feedbacks, (f) => f.personalInfo.isCsiMember || "Unknown"),
-  ).map(([name, value]) => ({ name, value }));
-
-  const branchData = BRANCHES.map((b) => ({
-    branch: b,
-    count: feedbacks.filter((f) => f.academicInfo?.branch === b).length,
-  })).filter((d) => d.count > 0);
-  const yearData = YEARS.map((y) => ({
-    year: y,
-    count: feedbacks.filter((f) => f.academicInfo?.year === y).length,
-  })).filter((d) => d.count > 0);
-  const q10Data = LIKELIHOOD.map((l) => ({
-    label: l,
-    count: feedbacks.filter(
-      (f) => f.feedbackResponses.q10_futureParticipation === l,
-    ).length,
-  }));
-
-  const radarData = Q_LABELS.map((q) => {
-    const scores = feedbacks
-      .map((f) => SCORE_MAP[(f.feedbackResponses as any)[q.key]])
-      .filter(Boolean);
-    return {
-      subject: q.short,
-      score: parseFloat(((avg(scores) / 5) * 100).toFixed(1)),
-      fullMark: 100,
-    };
-  });
-
-  const allScores = feedbacks.flatMap((f) =>
-    Object.values(f.feedbackResponses)
-      .map((v) => SCORE_MAP[v])
-      .filter(Boolean),
-  );
-  const overallAvg = avg(allScores);
-  const satisfactionPct = Math.round(((overallAvg - 1) / 4) * 100);
-
-  /* ── TanStack Table ── */
-  type Row = FeedbackEntry & { avgScore: number };
-  const tableData: Row[] = useMemo(
-    () =>
-      feedbacks.map((f) => ({
-        ...f,
-        avgScore: parseFloat(
-          avg(
-            Object.values(f.feedbackResponses)
-              .map((v) => SCORE_MAP[v])
-              .filter(Boolean),
-          ).toFixed(2),
-        ),
-      })),
-    [feedbacks],
-  );
-
-  const ch = createColumnHelper<Row>();
-  const columns = useMemo(
-    () => [
-      ch.accessor((r) => r.personalInfo.fullName, {
-        id: "name",
-        header: "Name",
-        cell: (i) => (
-          <span style={{ fontWeight: 600, color: "#c4b5fd" }}>
-            {i.getValue()}
-          </span>
-        ),
-      }),
-      ch.accessor((r) => r.personalInfo.email, {
-        id: "email",
-        header: "Email",
-        cell: (i) => (
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>{i.getValue()}</span>
-        ),
-      }),
-      ch.accessor((r) => r.personalInfo.participantType, {
-        id: "type",
-        header: "Type",
-        cell: (i) => {
-          const v = i.getValue();
-          return (
-            <span
-              style={{
-                padding: "2px 10px",
-                borderRadius: 20,
-                background:
-                  v === "Intra"
-                    ? "rgba(129,140,248,0.15)"
-                    : "rgba(244,114,182,0.15)",
-                color: v === "Intra" ? "#818cf8" : "#f472b6",
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              {v}
-            </span>
-          );
-        },
-      }),
-      ch.accessor((r) => r.academicInfo?.branch, {
-        id: "branch",
-        header: "Branch",
-        cell: (i) => (
-          <span style={{ color: "#e2e8f0" }}>{i.getValue() || "—"}</span>
-        ),
-      }),
-      ch.accessor((r) => r.academicInfo?.year, {
-        id: "year",
-        header: "Year",
-        cell: (i) => (
-          <span style={{ color: "#e2e8f0" }}>{i.getValue() || "—"}</span>
-        ),
-      }),
-      ch.accessor((r) => r.personalInfo.isCsiMember, {
-        id: "csi",
-        header: "CSI",
-        cell: (i) => {
-          const v = i.getValue();
-          return (
-            <span
-              style={{
-                padding: "2px 8px",
-                borderRadius: 20,
-                background:
-                  v === "Yes"
-                    ? "rgba(74,222,128,0.12)"
-                    : "rgba(248,113,113,0.12)",
-                color: v === "Yes" ? "#4ade80" : "#f87171",
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              {v}
-            </span>
-          );
-        },
-      }),
-      ch.accessor((r) => r.feedbackResponses.q1_engineeringKnowledge, {
-        id: "q1",
-        header: "Q1",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q2_technicalTools, {
-        id: "q2",
-        header: "Q2",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q3_problemSolving, {
-        id: "q3",
-        header: "Q3",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q4_teamwork, {
-        id: "q4",
-        header: "Q4",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q5_modernTools, {
-        id: "q5",
-        header: "Q5",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q6_lifelongLearning, {
-        id: "q6",
-        header: "Q6",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q7_ethicalPractices, {
-        id: "q7",
-        header: "Q7",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q8_entrepreneurship, {
-        id: "q8",
-        header: "Q8",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q9_skillsEquipped, {
-        id: "q9",
-        header: "Q9",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor((r) => r.feedbackResponses.q10_futureParticipation, {
-        id: "q10",
-        header: "Q10",
-        cell: (i) => <ScoreBadge value={i.getValue()} />,
-      }),
-      ch.accessor("avgScore", {
-        header: "Avg",
-        cell: (i) => {
-          const v = i.getValue();
-          const pct = Math.round(((v - 1) / 4) * 100);
-          const color =
-            pct >= 70 ? "#4ade80" : pct >= 50 ? "#facc15" : "#f87171";
-          return (
-            <span style={{ color, fontWeight: 700 }}>
-              {v}
-              <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 3 }}>
-                ({pct}%)
-              </span>
-            </span>
-          );
-        },
-      }),
-      ch.accessor("remarks", {
-        header: "Remarks",
-        cell: (i) => (
-          <span
-            style={{
-              fontSize: 12,
-              color: "#94a3b8",
-              maxWidth: 180,
-              display: "block",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-            title={i.getValue()}
-          >
-            {i.getValue() || "—"}
-          </span>
-        ),
-      }),
-      ch.accessor("submittedAt", {
-        header: "Date",
-        cell: (i) => (
-          <span style={{ fontSize: 11, color: "#64748b" }}>
-            {new Date(i.getValue()).toLocaleDateString()}
-          </span>
-        ),
-      }),
-    ],
-    [],
-  );
-
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    state: { globalFilter, sorting },
-    onGlobalFilterChange: setGlobalFilter,
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 15 } },
-  });
-
-  /* ── Excel Export ── */
-  const exportExcel = () => {
-    const rows = feedbacks.map((f) => ({
-      Name: f.personalInfo.fullName,
-      Email: f.personalInfo.email,
-      Contact: f.personalInfo.contact || "",
-      "Participant Type": f.personalInfo.participantType,
-      "CSI Member": f.personalInfo.isCsiMember,
-      Branch: f.academicInfo?.branch || "",
-      Year: f.academicInfo?.year || "",
-      Division: f.academicInfo?.division || "",
-      "Roll No": f.academicInfo?.rollNo || "",
-      PRN: f.academicInfo?.prn || "",
-      College: f.academicInfo?.college || "",
-      "Q1 - Engineering Knowledge": f.feedbackResponses.q1_engineeringKnowledge,
-      "Q2 - Technical Tools": f.feedbackResponses.q2_technicalTools,
-      "Q3 - Problem Solving": f.feedbackResponses.q3_problemSolving,
-      "Q4 - Teamwork": f.feedbackResponses.q4_teamwork,
-      "Q5 - Modern Tools": f.feedbackResponses.q5_modernTools,
-      "Q6 - Lifelong Learning": f.feedbackResponses.q6_lifelongLearning,
-      "Q7 - Ethical Practices": f.feedbackResponses.q7_ethicalPractices,
-      "Q8 - Entrepreneurship": f.feedbackResponses.q8_entrepreneurship,
-      "Q9 - Skills Equipped": f.feedbackResponses.q9_skillsEquipped,
-      "Q10 - Future Participation": f.feedbackResponses.q10_futureParticipation,
-      "Avg Score": parseFloat(
-        avg(
-          Object.values(f.feedbackResponses)
-            .map((v) => SCORE_MAP[v])
-            .filter(Boolean),
-        ).toFixed(2),
-      ),
-      Remarks: f.remarks,
-      "Submitted At": new Date(f.submittedAt).toLocaleString(),
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = Object.keys(rows[0] || {}).map(() => ({ wch: 22 }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Feedback");
-    XLSX.writeFile(
-      wb,
-      `CSI_Feedback_${new Date().toISOString().split("T")[0]}.xlsx`,
-    );
+    }
   };
 
-  /* ─────────────────────────────────────────────
-     Render
-  ───────────────────────────────────────────── */
-  if (isLoading)
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#0a0a1a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              border: "3px solid rgba(129,140,248,0.3)",
-              borderTop: "3px solid #818cf8",
-              borderRadius: "50%",
-              margin: "0 auto 16px",
-              animation: "spin 1s linear infinite",
-            }}
-          />
-          <p style={{ color: "#818cf8", fontSize: 14 }}>
-            Loading feedback data…
-          </p>
-        </div>
-      </div>
-    );
-
-  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: 7,
-    padding: "8px 18px",
-    borderRadius: 10,
-    border: "none",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
-    transition: "all 0.2s",
-    background: active ? "rgba(129,140,248,0.22)" : "transparent",
-    color: active ? "#818cf8" : "#64748b",
-  });
-
-  const thStyle: React.CSSProperties = {
-    padding: "10px 14px",
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#64748b",
-    letterSpacing: "0.07em",
-    textTransform: "uppercase",
-    textAlign: "left",
-    borderBottom: "1px solid rgba(129,140,248,0.12)",
-    whiteSpace: "nowrap",
-    cursor: "pointer",
-    background: "rgba(15,12,40,0.9)",
-    userSelect: "none",
-  };
-  const tdStyle: React.CSSProperties = {
-    padding: "10px 14px",
-    borderBottom: "1px solid rgba(129,140,248,0.08)",
-    verticalAlign: "middle",
+  /* ──────────────────────────── RENDER ──────────────────────────── */
+  const cardStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(124,92,252,0.18)",
+    borderRadius: 16,
+    padding: "28px 30px",
+    backdropFilter: "blur(12px)",
+    marginBottom: 20,
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(160deg,#0a0a1a 0%,#0d0b23 50%,#0a0a1a 100%)",
-        color: "#f1f5f9",
-      }}
-    >
+    <>
       <style>{`
-        @keyframes spin{to{transform:rotate(360deg)}}
-        ::-webkit-scrollbar{width:6px;height:6px}
-        ::-webkit-scrollbar-track{background:rgba(129,140,248,0.05)}
-        ::-webkit-scrollbar-thumb{background:rgba(129,140,248,0.3);border-radius:99px}
-        ::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,0.5)}
-        input::placeholder{color:#475569}
+        @keyframes float1      { 0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-18px) rotate(180deg);} }
+        @keyframes float2      { 0%,100%{transform:translateY(0) translateX(0);}33%{transform:translateY(-12px) translateX(8px);}66%{transform:translateY(6px) translateX(-6px);} }
+        @keyframes float3      { 0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(10px,-15px) scale(1.3);} }
+        @keyframes titleReveal { from{opacity:0;transform:translateY(28px) scale(0.93);}to{opacity:1;transform:translateY(0) scale(1);} }
+        @keyframes glowPulse   { 0%,100%{opacity:0.4;}50%{opacity:0.7;} }
+        @keyframes lineSweep   { 0%{transform:translateX(-100%);}100%{transform:translateX(100%);} }
+        @keyframes slideUp     { from{opacity:0;transform:translateY(36px);}to{opacity:1;transform:translateY(0);} }
+        @keyframes checkPop    { 0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);} }
+        @keyframes spin        { to{transform:rotate(360deg);} }
+
+        input:focus, select:focus, textarea:focus {
+          border-color:rgba(167,139,250,0.6)!important;
+          box-shadow:0 0 0 3px rgba(124,92,252,0.12)!important;
+        }
+        input::placeholder, textarea::placeholder { color:rgba(150,150,180,0.5); }
+        select option { background:#0e0e1a; color:#e2e2f0; }
+        .hover-btn:hover  { opacity:0.9; transform:translateY(-1px); }
+        .hover-btn:active { transform:translateY(0); }
+        .q-card { transition:border-color 0.2s, background 0.2s; }
+        .q-card:hover { border-color:rgba(124,92,252,0.3)!important; background:rgba(255,255,255,0.045)!important; }
+        .pt-tile {
+          flex:1; display:flex; align-items:center; gap:12px; cursor:pointer;
+          padding:14px 16px; border-radius:12px;
+          border:1px solid rgba(124,92,252,0.22);
+          background:rgba(255,255,255,0.03);
+          transition:all 0.2s;
+        }
+        .pt-tile:hover  { border-color:rgba(167,139,250,0.45); background:rgba(124,92,252,0.08); }
+        .pt-tile.active { border-color:rgba(167,139,250,0.7); background:rgba(124,92,252,0.2); }
       `}</style>
 
-      {/* ── Sticky Header ── */}
-      <div
+      <main
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 30,
-          background: "rgba(10,10,26,0.92)",
-          backdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(129,140,248,0.18)",
-          padding: "14px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
+          minHeight: "100vh",
+          background:
+            "linear-gradient(180deg,#0a0a14 0%,#0e0e1a 40%,#0a0a14 100%)",
+          padding: "80px 20px 100px",
+          position: "relative",
+          overflow: "hidden",
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/admin/dashboard")}
-            style={{
-              color: "#818cf8",
-              gap: 6,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <ArrowLeft size={15} /> Back
-          </Button>
-          <div
-            style={{
-              width: 1,
-              height: 22,
-              background: "rgba(129,140,248,0.25)",
-            }}
-          />
-          <span
-            style={{
-              fontSize: 17,
-              fontWeight: 800,
-              background: "linear-gradient(90deg,#fff,#c4b5fd)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Feedback Analytics
-          </span>
-          <span
-            style={{
-              fontSize: 12,
-              color: "#64748b",
-              background: "rgba(129,140,248,0.1)",
-              border: "1px solid rgba(129,140,248,0.2)",
-              borderRadius: 20,
-              padding: "2px 10px",
-            }}
-          >
-            {feedbacks.length} responses
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              display: "flex",
-              background: "rgba(129,140,248,0.08)",
-              border: "1px solid rgba(129,140,248,0.15)",
-              borderRadius: 12,
-              padding: 4,
-              gap: 2,
-            }}
-          >
-            <button
-              style={tabBtnStyle(tab === "charts")}
-              onClick={() => setTab("charts")}
-            >
-              <BarChart3 size={14} />
-              Charts
-            </button>
-            <button
-              style={tabBtnStyle(tab === "table")}
-              onClick={() => setTab("table")}
-            >
-              <TableIcon size={14} />
-              Grid View
-            </button>
-          </div>
-          <button
-            onClick={exportExcel}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "8px 16px",
-              borderRadius: 10,
-              background: "rgba(74,222,128,0.12)",
-              border: "1px solid rgba(74,222,128,0.3)",
-              color: "#4ade80",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <Download size={14} /> Export Excel
-          </button>
-        </div>
-      </div>
-
-      <div
-        style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 20px 60px" }}
-      >
-        {/* Stat Cards — always visible */}
+        {/* bg grid */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 14,
-            marginBottom: 28,
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            backgroundImage: `linear-gradient(rgba(124,92,252,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,92,252,0.03) 1px,transparent 1px)`,
+            backgroundSize: "60px 60px",
+            transform: `translateY(${scrollY * 0.05}px)`,
+          }}
+        />
+
+        {/* ambient blobs */}
+        <div
+          style={{
+            position: "fixed",
+            top: -180,
+            left: -180,
+            width: 480,
+            height: 480,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle,rgba(124,92,252,0.08) 0%,transparent 70%)",
+            filter: "blur(40px)",
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "fixed",
+            bottom: -140,
+            right: -140,
+            width: 420,
+            height: 420,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle,rgba(80,60,180,0.07) 0%,transparent 70%)",
+            filter: "blur(40px)",
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            width: 600,
+            height: 600,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle,rgba(100,80,200,0.04) 0%,transparent 70%)",
+            filter: "blur(50px)",
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        />
+
+        {particles.map((p, i) => (
+          <Particle key={i} style={{ ...p, zIndex: 0 }} />
+        ))}
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            maxWidth: 760,
+            margin: "0 auto",
           }}
         >
-          <StatCard
-            icon={<Users size={20} color="#818cf8" />}
-            label="Total Responses"
-            value={feedbacks.length}
-            sub="All submissions"
-            bg="rgba(129,140,248,0.18)"
-          />
-          <StatCard
-            icon={<TrendingUp size={20} color="#a78bfa" />}
-            label="Avg Score"
-            value={`${overallAvg.toFixed(2)} / 5`}
-            sub="Across all questions"
-            bg="rgba(167,139,250,0.18)"
-          />
-          <StatCard
-            icon={<Award size={20} color="#4ade80" />}
-            label="Satisfaction"
-            value={`${satisfactionPct}%`}
-            sub="Overall satisfaction rate"
-            bg="rgba(74,222,128,0.18)"
-          />
-          <StatCard
-            icon={<MessageSquare size={20} color="#f472b6" />}
-            label="With Remarks"
-            value={feedbacks.filter((f) => f.remarks?.trim()).length}
-            sub="Written comments"
-            bg="rgba(244,114,182,0.18)"
-          />
-        </div>
-
-        {/* ════ CHARTS TAB ════ */}
-        {tab === "charts" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* Row 1: Avg Score Bar + Sentiment Donut */}
+          {/* ── Hero ── */}
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 1fr",
-                gap: 20,
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 520,
+                height: 160,
+                background:
+                  "radial-gradient(ellipse,rgba(124,92,252,0.11) 0%,transparent 70%)",
+                filter: "blur(28px)",
+                top: -30,
+                animation: "glowPulse 4s ease-in-out infinite",
+                pointerEvents: "none",
+              }}
+            />
+            <h1
+              style={{
+                position: "relative",
+                margin: 0,
+                fontSize: "clamp(36px,7vw,58px)",
+                fontWeight: 900,
+                letterSpacing: -2,
+                lineHeight: 1,
+                animation: visible
+                  ? "titleReveal 0.9s cubic-bezier(.22,1,.36,1) forwards"
+                  : "none",
+                opacity: visible ? undefined : 0,
+                background:
+                  "linear-gradient(135deg,#ffffff 0%,#c4b5fd 45%,#a78bfa 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
               }}
             >
-              <ChartCard
-                title="📊 Average Score per Question"
-                sub="Score out of 5 — higher is better"
-              >
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={avgScores}
-                    margin={{ top: 4, right: 8, left: -20, bottom: 10 }}
-                  >
-                    <defs>
-                      <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#818cf8" stopOpacity={1} />
-                        <stop
-                          offset="100%"
-                          stopColor="#c084fc"
-                          stopOpacity={1}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(129,140,248,0.08)"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="shortName"
-                      tick={{ fill: "#94a3b8", fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      domain={[0, 5]}
-                      tick={{ fill: "#64748b", fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      content={<Tip />}
-                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
-                    />
-                    <Bar
-                      dataKey="avg"
-                      name="Avg Score"
-                      fill="url(#grad1)"
-                      radius={[6, 6, 0, 0]}
-                      maxBarSize={44}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
+              Event Feedback 📋
+            </h1>
+            <div
+              style={{
+                position: "relative",
+                height: 2,
+                marginTop: 18,
+                overflow: "hidden",
+                maxWidth: 280,
+                margin: "18px auto 0",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(90deg,transparent,rgba(124,92,252,0.15),transparent)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  background:
+                    "linear-gradient(90deg,transparent 0%,rgba(167,139,250,0.6) 50%,transparent 100%)",
+                  animation: "lineSweep 3s linear infinite",
+                }}
+              />
+            </div>
+            <p
+              style={{
+                marginTop: 14,
+                fontSize: 14,
+                color: "rgba(190,190,220,0.7)",
+                letterSpacing: 0.5,
+                fontWeight: 500,
+                animation: visible
+                  ? "titleReveal 0.9s cubic-bezier(.22,1,.36,1) 0.2s forwards"
+                  : "none",
+                opacity: visible ? undefined : 0,
+              }}
+            >
+              Share your experience and help us improve future events
+            </p>
+          </div>
 
-              <ChartCard
-                title="🎯 Overall Sentiment"
-                sub="Positive / Neutral / Negative"
-              >
-                <ResponsiveContainer width="100%" height={180}>
-                  <PieChart>
-                    <Pie
-                      data={sentimentData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={52}
-                      outerRadius={78}
-                      paddingAngle={4}
-                      dataKey="value"
+          {/* ── Progress Stepper ── */}
+          {!submitted && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 36,
+                animation: visible
+                  ? "slideUp 0.7s cubic-bezier(.22,1,.36,1) 0.3s forwards"
+                  : "none",
+                opacity: visible ? undefined : 0,
+              }}
+            >
+              {[
+                { n: 1, label: "Your Details" },
+                { n: 2, label: "Feedback" },
+              ].map((step, i) => {
+                const active = slide === step.n;
+                const done = slide > step.n;
+                return (
+                  <div
+                    key={step.n}
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
                     >
-                      {sentimentData.map((e) => (
-                        <Cell
-                          key={e.name}
-                          fill={C.sentiment[e.name] || "#818cf8"}
-                          stroke="transparent"
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<Tip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          border: `2px solid ${active ? "#a78bfa" : done ? "#a78bfa" : "rgba(124,92,252,0.3)"}`,
+                          background: active
+                            ? "rgba(124,92,252,0.25)"
+                            : done
+                              ? "rgba(124,92,252,0.35)"
+                              : "transparent",
+                          color:
+                            active || done
+                              ? "#c4b5fd"
+                              : "rgba(150,150,180,0.5)",
+                          transition: "all 0.3s",
+                        }}
+                      >
+                        {done ? "✓" : step.n}
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: active
+                            ? "#c4b5fd"
+                            : done
+                              ? "rgba(196,181,253,0.7)"
+                              : "rgba(150,150,180,0.5)",
+                          fontWeight: active ? 600 : 400,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                    {i === 0 && (
+                      <div
+                        style={{
+                          width: 80,
+                          height: 2,
+                          margin: "0 8px",
+                          marginBottom: 22,
+                          background:
+                            slide > 1
+                              ? "rgba(167,139,250,0.5)"
+                              : "rgba(124,92,252,0.15)",
+                          transition: "background 0.3s",
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ══ SUCCESS ══ */}
+          {submitted && (
+            <div
+              style={{
+                ...cardStyle,
+                textAlign: "center",
+                padding: "60px 40px",
+                animation: "slideUp 0.6s cubic-bezier(.22,1,.36,1) forwards",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 64,
+                  marginBottom: 20,
+                  animation: "checkPop 0.5s cubic-bezier(.22,1,.36,1) forwards",
+                }}
+              >
+                🎉
+              </div>
+              <h2
+                style={{
+                  fontSize: 26,
+                  fontWeight: 800,
+                  color: "#c4b5fd",
+                  margin: "0 0 12px",
+                }}
+              >
+                Thank You!
+              </h2>
+              <p
+                style={{
+                  color: "rgba(190,190,220,0.7)",
+                  fontSize: 15,
+                  lineHeight: 1.8,
+                  margin: 0,
+                }}
+              >
+                Your feedback has been submitted successfully.
+                <br />A confirmation email has been sent to{" "}
+                <strong style={{ color: "#c4b5fd" }}>{details.email}</strong>.
+                <br />
+                We appreciate your time and valuable response.
+              </p>
+            </div>
+          )}
+
+          {/* ══ SLIDE 1: DETAILS ══ */}
+          {!submitted && slide === 1 && (
+            <div
+              style={{
+                animation: visible
+                  ? "slideUp 0.8s cubic-bezier(.22,1,.36,1) 0.4s forwards"
+                  : "none",
+                opacity: visible ? undefined : 0,
+              }}
+            >
+              {/* ── Personal Info card ── */}
+              <div style={cardStyle}>
+                <h3
                   style={{
+                    margin: "0 0 22px",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#c4b5fd",
                     display: "flex",
-                    flexWrap: "wrap",
-                    justifyContent: "center",
-                    gap: 10,
-                    marginTop: 8,
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
-                  {sentimentData.map((e) => (
-                    <LegendDot
-                      key={e.name}
-                      color={C.sentiment[e.name] || "#818cf8"}
-                      label={e.name}
-                      value={e.value}
-                    />
-                  ))}
-                </div>
-              </ChartCard>
-            </div>
-
-            {/* Row 2: Radar + Q10 horizontal bar */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 20,
-              }}
-            >
-              <ChartCard
-                title="🕸️ Competency Radar"
-                sub="Normalized 0–100 score across dimensions"
-              >
-                <ResponsiveContainer width="100%" height={280}>
-                  <RadarChart
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="70%"
-                    data={radarData}
-                  >
-                    <PolarGrid stroke="rgba(129,140,248,0.12)" />
-                    <PolarAngleAxis
-                      dataKey="subject"
-                      tick={{ fill: "#94a3b8", fontSize: 11 }}
-                    />
-                    <PolarRadiusAxis
-                      angle={30}
-                      domain={[0, 100]}
-                      tick={{ fill: "#64748b", fontSize: 9 }}
-                    />
-                    <Radar
-                      name="Score"
-                      dataKey="score"
-                      stroke={C.radar}
-                      fill={C.radar}
-                      fillOpacity={0.22}
-                      strokeWidth={2}
-                    />
-                    <Tooltip content={<Tip />} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <ChartCard
-                title="🔮 Future Participation Intent"
-                sub="Q10: Likelihood to participate again"
-              >
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={q10Data}
-                    layout="vertical"
-                    margin={{ left: 8, right: 28, top: 4, bottom: 4 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(129,140,248,0.08)"
-                      horizontal={false}
-                    />
-                    <XAxis
-                      type="number"
-                      tick={{ fill: "#64748b", fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                      allowDecimals={false}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      tick={{ fill: "#94a3b8", fontSize: 11 }}
-                      width={90}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      content={<Tip />}
-                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
-                    />
-                    <Bar
-                      dataKey="count"
-                      name="Responses"
-                      radius={[0, 6, 6, 0]}
-                      maxBarSize={28}
-                    >
-                      {q10Data.map((_, i) => (
-                        <Cell key={i} fill={C.bars[i % C.bars.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            </div>
-
-            {/* Row 3: Branch bar + two mini pies */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 1fr",
-                gap: 20,
-              }}
-            >
-              <ChartCard
-                title="🏛️ Responses by Branch"
-                sub="Submissions per engineering branch"
-              >
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart
-                    data={branchData}
-                    margin={{ top: 4, right: 8, left: -20, bottom: 10 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(129,140,248,0.08)"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="branch"
-                      tick={{ fill: "#94a3b8", fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fill: "#64748b", fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      content={<Tip />}
-                      cursor={{ fill: "rgba(129,140,248,0.07)" }}
-                    />
-                    <Bar
-                      dataKey="count"
-                      name="Responses"
-                      radius={[6, 6, 0, 0]}
-                      maxBarSize={44}
-                    >
-                      {branchData.map((e) => (
-                        <Cell
-                          key={e.branch}
-                          fill={C.branch[e.branch] || "#818cf8"}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 20 }}
-              >
-                <ChartCard title="👥 Participant Type">
-                  <ResponsiveContainer width="100%" height={130}>
-                    <PieChart>
-                      <Pie
-                        data={participantData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={34}
-                        outerRadius={55}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {participantData.map((_, i) => (
-                          <Cell
-                            key={i}
-                            fill={C.pie1[i % C.pie1.length]}
-                            stroke="transparent"
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<Tip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div
+                  <span
                     style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      justifyContent: "center",
-                      gap: 8,
-                      marginTop: 4,
+                      background: "rgba(124,92,252,0.2)",
+                      border: "1px solid rgba(124,92,252,0.3)",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                      fontSize: 12,
                     }}
                   >
-                    {participantData.map((e, i) => (
-                      <LegendDot
-                        key={e.name}
-                        color={C.pie1[i % C.pie1.length]}
-                        label={e.name}
-                        value={e.value}
-                      />
-                    ))}
-                  </div>
-                </ChartCard>
+                    01
+                  </span>
+                  Personal Information
+                </h3>
 
-                <ChartCard title="🪪 CSI Members">
-                  <ResponsiveContainer width="100%" height={110}>
-                    <PieChart>
-                      <Pie
-                        data={csiData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={30}
-                        outerRadius={48}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {csiData.map((e) => (
-                          <Cell
-                            key={e.name}
-                            fill={C.csi[e.name] || "#818cf8"}
-                            stroke="transparent"
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<Tip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      justifyContent: "center",
-                      gap: 8,
-                      marginTop: 4,
-                    }}
-                  >
-                    {csiData.map((e) => (
-                      <LegendDot
-                        key={e.name}
-                        color={C.csi[e.name] || "#818cf8"}
-                        label={e.name}
-                        value={e.value}
-                      />
-                    ))}
-                  </div>
-                </ChartCard>
-              </div>
-            </div>
-
-            {/* Row 4: Year */}
-            <ChartCard
-              title="🎓 Responses by Year"
-              sub="Academic year-wise distribution"
-            >
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart
-                  data={yearData}
-                  margin={{ top: 4, right: 8, left: -20, bottom: 4 }}
-                >
-                  <defs>
-                    <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#818cf8" stopOpacity={1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(129,140,248,0.08)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="year"
-                    tick={{ fill: "#94a3b8", fontSize: 13 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    content={<Tip />}
-                    cursor={{ fill: "rgba(129,140,248,0.07)" }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    name="Responses"
-                    fill="url(#grad2)"
-                    radius={[8, 8, 0, 0]}
-                    maxBarSize={60}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Remarks */}
-            {feedbacks.filter((f) => f.remarks?.trim()).length > 0 && (
-              <ChartCard
-                title="💬 Recent Remarks"
-                sub="Latest written feedback from participants"
-              >
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))",
-                    gap: 12,
-                    maxHeight: 280,
-                    overflowY: "auto",
-                    paddingRight: 4,
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0 20px",
                   }}
                 >
-                  {feedbacks
-                    .filter((f) => f.remarks?.trim())
-                    .slice(-10)
-                    .reverse()
-                    .map((f) => (
-                      <div
-                        key={f.id}
-                        style={{
-                          background: "rgba(129,140,248,0.06)",
-                          border: "1px solid rgba(129,140,248,0.12)",
-                          borderRadius: 12,
-                          padding: "12px 14px",
-                        }}
-                      >
-                        <p
-                          style={{
-                            margin: "0 0 8px",
-                            fontSize: 13,
-                            color: "#cbd5e1",
-                            lineHeight: 1.6,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          "{f.remarks}"
-                        </p>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: 11,
-                            color: "#818cf8",
-                            fontWeight: 600,
-                          }}
-                        >
-                          — {f.personalInfo.fullName} · {f.academicInfo?.branch}{" "}
-                          {f.academicInfo?.year}
-                        </p>
-                      </div>
-                    ))}
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <Field label="Full Name" required error={errors.fullName}>
+                      <input
+                        style={inputStyle}
+                        placeholder="Enter your full name"
+                        value={details.fullName}
+                        onChange={(e) => setDetail("fullName", e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Email Address" required error={errors.email}>
+                    <input
+                      style={inputStyle}
+                      type="email"
+                      placeholder="you@example.com"
+                      value={details.email}
+                      onChange={(e) => setDetail("email", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Contact Number" required error={errors.contact}>
+                    <input
+                      style={inputStyle}
+                      placeholder="10-digit mobile number"
+                      value={details.contact}
+                      onChange={(e) =>
+                        setDetail(
+                          "contact",
+                          e.target.value.replace(/\D/g, "").slice(0, 10),
+                        )
+                      }
+                    />
+                  </Field>
                 </div>
-              </ChartCard>
-            )}
-          </div>
-        )}
 
-        {/* ════ TABLE / GRID VIEW TAB ════ */}
-        {tab === "table" && (
-          <div>
-            {/* Search bar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 14,
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ position: "relative", flex: 1, minWidth: 240 }}>
-                <Search
-                  size={14}
-                  style={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#475569",
-                  }}
-                />
-                <input
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  placeholder="Search name, email, branch…"
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px 9px 36px",
-                    background: "rgba(129,140,248,0.08)",
-                    border: "1px solid rgba(129,140,248,0.2)",
-                    borderRadius: 10,
-                    color: "#e2e8f0",
-                    fontSize: 13,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                {globalFilter && (
-                  <button
-                    onClick={() => setGlobalFilter("")}
-                    style={{
-                      position: "absolute",
-                      right: 10,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "#64748b",
-                      display: "flex",
-                    }}
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-              <span
-                style={{ fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}
-              >
-                {table.getFilteredRowModel().rows.length} of {feedbacks.length}{" "}
-                entries
-              </span>
-            </div>
-
-            {/* Q key reference */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginBottom: 14,
-              }}
-            >
-              {Q_LABELS.map((q) => (
-                <span
-                  key={q.key}
-                  style={{
-                    fontSize: 11,
-                    color: "#818cf8",
-                    background: "rgba(129,140,248,0.1)",
-                    border: "1px solid rgba(129,140,248,0.18)",
-                    borderRadius: 6,
-                    padding: "2px 8px",
-                  }}
+                <Field
+                  label="Are you a CSI Member?"
+                  required
+                  error={errors.csiMember}
                 >
-                  {q.short}: {q.label}
-                </span>
-              ))}
-            </div>
+                  <RadioGroup
+                    name="csiMember"
+                    options={["Yes", "No"]}
+                    value={details.csiMember}
+                    onChange={(v) => setDetail("csiMember", v)}
+                  />
+                </Field>
 
-            {/* Table */}
-            <div
-              style={{
-                overflowX: "auto",
-                borderRadius: 14,
-                border: "1px solid rgba(129,140,248,0.15)",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: 13,
-                }}
-              >
-                <thead>
-                  {table.getHeaderGroups().map((hg) => (
-                    <tr key={hg.id}>
-                      {hg.headers.map((h) => (
-                        <th
-                          key={h.id}
-                          style={thStyle}
-                          onClick={h.column.getToggleSortingHandler()}
+                {/* ── Participant Type ── */}
+                <Field
+                  label="Participant Type"
+                  required
+                  error={errors.participantType}
+                >
+                  <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+                    {(["Intra", "Inter"] as const).map((type) => {
+                      const active = details.participantType === type;
+                      return (
+                        <div
+                          key={type}
+                          className={`pt-tile${active ? " active" : ""}`}
+                          onClick={() => {
+                            if (type === "Inter") {
+                              setDetails((p) => ({
+                                ...p,
+                                participantType: type,
+                                division: "",
+                                rollNo: "",
+                                prn: "",
+                              }));
+                            } else {
+                              setDetails((p) => ({
+                                ...p,
+                                participantType: type,
+                                college: "",
+                              }));
+                            }
+                          }}
                         >
+                          <span style={{ fontSize: 22 }}>
+                            {type === "Intra" ? "🏫" : "🌐"}
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: active
+                                  ? "#c4b5fd"
+                                  : "rgba(200,200,230,0.8)",
+                              }}
+                            >
+                              {type}-College
+                            </p>
+                            <p
+                              style={{
+                                margin: "2px 0 0",
+                                fontSize: 12,
+                                color: "rgba(167,139,250,0.55)",
+                              }}
+                            >
+                              {type === "Intra"
+                                ? "SAKEC College student"
+                                : "Student from another college"}
+                            </p>
+                          </div>
                           <div
                             style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
+                              width: 16,
+                              height: 16,
+                              borderRadius: "50%",
+                              border: `2px solid ${active ? "#a78bfa" : "rgba(124,92,252,0.35)"}`,
+                              background: active ? "#a78bfa" : "transparent",
+                              flexShrink: 0,
+                              transition: "all 0.2s",
                             }}
-                          >
-                            {flexRender(
-                              h.column.columnDef.header,
-                              h.getContext(),
-                            )}
-                            {h.column.getIsSorted() === "asc" && (
-                              <span style={{ color: "#818cf8", fontSize: 10 }}>
-                                ▲
-                              </span>
-                            )}
-                            {h.column.getIsSorted() === "desc" && (
-                              <span style={{ color: "#818cf8", fontSize: 10 }}>
-                                ▼
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody>
-                  {table.getRowModel().rows.map((row, ri) => (
-                    <tr
-                      key={row.id}
-                      style={{
-                        background:
-                          ri % 2 === 0
-                            ? "rgba(15,12,40,0.5)"
-                            : "rgba(129,140,248,0.03)",
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} style={tdStyle}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                  {table.getRowModel().rows.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={columns.length}
-                        style={{
-                          ...tdStyle,
-                          textAlign: "center",
-                          color: "#64748b",
-                          padding: "40px 0",
-                        }}
-                      >
-                        No entries found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Field>
 
-            {/* Pagination */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginTop: 14,
-                flexWrap: "wrap",
-                gap: 10,
-              }}
-            >
-              <span style={{ fontSize: 12, color: "#64748b" }}>
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount() || 1}
-              </span>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[
-                  {
-                    l: "«",
-                    fn: () => table.setPageIndex(0),
-                    d: !table.getCanPreviousPage(),
-                  },
-                  {
-                    l: "‹",
-                    fn: () => table.previousPage(),
-                    d: !table.getCanPreviousPage(),
-                  },
-                  {
-                    l: "›",
-                    fn: () => table.nextPage(),
-                    d: !table.getCanNextPage(),
-                  },
-                  {
-                    l: "»",
-                    fn: () => table.setPageIndex(table.getPageCount() - 1),
-                    d: !table.getCanNextPage(),
-                  },
-                ].map((b) => (
-                  <button
-                    key={b.l}
-                    onClick={b.fn}
-                    disabled={b.d}
+                {/* Inter-only: College name */}
+                {isInter && (
+                  <Field label="College Name" required error={errors.college}>
+                    <input
+                      style={inputStyle}
+                      placeholder="Enter your college name"
+                      value={details.college}
+                      onChange={(e) => setDetail("college", e.target.value)}
+                    />
+                  </Field>
+                )}
+              </div>
+
+              {/* ── Academic Details card ── */}
+              <div style={cardStyle}>
+                <h3
+                  style={{
+                    margin: "0 0 6px",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#c4b5fd",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
                     style={{
-                      padding: "6px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(129,140,248,0.2)",
-                      background: b.d ? "transparent" : "rgba(129,140,248,0.1)",
-                      color: b.d ? "#334155" : "#818cf8",
-                      cursor: b.d ? "not-allowed" : "pointer",
-                      fontSize: 13,
-                      fontWeight: 600,
+                      background: "rgba(124,92,252,0.2)",
+                      border: "1px solid rgba(124,92,252,0.3)",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                      fontSize: 12,
                     }}
                   >
-                    {b.l}
-                  </button>
-                ))}
+                    02
+                  </span>
+                  Academic Details
+                  {isInter && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        background: "rgba(167,139,250,0.1)",
+                        border: "1px solid rgba(167,139,250,0.22)",
+                        borderRadius: 6,
+                        padding: "3px 10px",
+                        color: "rgba(167,139,250,0.65)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Division / Roll No / PRN not required for Inter-College
+                    </span>
+                  )}
+                </h3>
+                <p
+                  style={{
+                    margin: "0 0 20px",
+                    fontSize: 12,
+                    color: "rgba(167,139,250,0.5)",
+                  }}
+                >
+                  {isIntra
+                    ? "All fields are required for intra-college participants."
+                    : isInter
+                      ? "Enter branch and year from your college."
+                      : "Select participant type above to see all required fields."}
+                </p>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0 20px",
+                  }}
+                >
+                  <Field label="Branch" required error={errors.branch}>
+                    <select
+                      style={selectStyle}
+                      value={details.branch}
+                      onChange={(e) => setDetail("branch", e.target.value)}
+                    >
+                      <option value="">Select branch</option>
+                      {[
+                        "COMPS",
+                        "IT",
+                        "AI-DS",
+                        "CYSE",
+                        "ECS",
+                        "EXTC",
+                        "ACT",
+                        "VLSI",
+                      ].map((b) => (
+                        <option key={b}>{b}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Year" required error={errors.year}>
+                    <select
+                      style={selectStyle}
+                      value={details.year}
+                      onChange={(e) => setDetail("year", e.target.value)}
+                    >
+                      <option value="">Select year</option>
+                      {["FE", "SE", "TE", "BTech"].map((y) => (
+                        <option key={y}>{y}</option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  {/* Intra-only fields — hidden for Inter */}
+                  {isIntra && (
+                    <>
+                      <Field label="Division" required error={errors.division}>
+                        <input
+                          style={inputStyle}
+                          placeholder="e.g. 3, 4, 9"
+                          value={details.division}
+                          onChange={(e) =>
+                            setDetail("division", e.target.value)
+                          }
+                        />
+                      </Field>
+                      <Field label="Roll No" required error={errors.rollNo}>
+                        <input
+                          style={inputStyle}
+                          placeholder="Enter roll number"
+                          value={details.rollNo}
+                          onChange={(e) => setDetail("rollNo", e.target.value)}
+                        />
+                      </Field>
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <Field
+                          label="PRN (14-digit Permanent Roll No.)"
+                          required
+                          error={errors.prn}
+                        >
+                          <input
+                            style={inputStyle}
+                            placeholder="14-digit PRN"
+                            value={details.prn}
+                            onChange={(e) =>
+                              setDetail(
+                                "prn",
+                                e.target.value
+                                  .replace(/[^A-Za-z0-9]/g, "")
+                                  .toUpperCase()
+                                  .slice(0, 14),
+                              )
+                            }
+                            maxLength={14}
+                          />
+                        </Field>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
+
+              <button
+                className="hover-btn"
+                onClick={handleNext}
                 style={{
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid rgba(129,140,248,0.2)",
-                  background: "rgba(15,12,40,0.8)",
-                  color: "#94a3b8",
-                  fontSize: 12,
+                  width: "100%",
+                  padding: "14px 0",
+                  background: "linear-gradient(135deg,#7c5cfc,#a78bfa)",
+                  border: "none",
+                  borderRadius: 12,
+                  color: "#fff",
+                  fontSize: 15,
+                  fontWeight: 700,
                   cursor: "pointer",
+                  letterSpacing: 0.5,
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 24px rgba(124,92,252,0.3)",
                 }}
               >
-                {[10, 15, 25, 50].map((s) => (
-                  <option key={s} value={s}>
-                    {s} per page
-                  </option>
-                ))}
-              </select>
+                Continue to Feedback →
+              </button>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+
+          {/* ══ SLIDE 2: FEEDBACK ══ */}
+          {!submitted && slide === 2 && (
+            <div
+              style={{
+                animation: "slideUp 0.5s cubic-bezier(.22,1,.36,1) forwards",
+              }}
+            >
+              <div style={{ ...cardStyle, marginBottom: 16 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: "rgba(190,190,220,0.6)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Please rate the following statements about the event. Your
+                  honest feedback helps us improve.
+                </p>
+              </div>
+
+              {FEEDBACK_QUESTIONS.map((q, i) => (
+                <div
+                  key={q.id}
+                  className="q-card"
+                  style={{
+                    ...cardStyle,
+                    marginBottom: 16,
+                    borderLeft: "3px solid rgba(124,92,252,0.4)",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: "0 0 4px",
+                      fontSize: 12,
+                      color: "rgba(167,139,250,0.6)",
+                      fontWeight: 600,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Question {i + 1}
+                  </p>
+                  <p
+                    style={{
+                      margin: "0 0 12px",
+                      fontSize: 14,
+                      color: "rgba(220,220,240,0.9)",
+                      lineHeight: 1.6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {q.text}
+                    <span style={{ color: "#f87171", marginLeft: 3 }}>*</span>
+                  </p>
+                  <RadioGroup
+                    name={q.id}
+                    options={q.options}
+                    value={feedback[q.id] || ""}
+                    onChange={(v) => setFeedback((p) => ({ ...p, [q.id]: v }))}
+                  />
+                  {errors[q.id] && (
+                    <p style={{ color: "#f87171", fontSize: 12, marginTop: 8 }}>
+                      {errors[q.id]}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              {/* Remarks */}
+              <div style={cardStyle}>
+                <Field label="Any Remarks" required error={errors.remarks}>
+                  <textarea
+                    style={{
+                      ...inputStyle,
+                      minHeight: 100,
+                      resize: "vertical" as const,
+                      lineHeight: 1.6,
+                    }}
+                    placeholder="Share any additional thoughts, suggestions, or feedback about the event..."
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  className="hover-btn"
+                  onClick={() => {
+                    setSlide(1);
+                    setErrors({});
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "14px 0",
+                    background: "transparent",
+                    border: "1px solid rgba(124,92,252,0.35)",
+                    borderRadius: 12,
+                    color: "#a78bfa",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  ← Back
+                </button>
+                <button
+                  className="hover-btn"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  style={{
+                    flex: 3,
+                    padding: "14px 0",
+                    background: isLoading
+                      ? "rgba(124,92,252,0.5)"
+                      : "linear-gradient(135deg,#7c5cfc,#a78bfa)",
+                    border: "none",
+                    borderRadius: 12,
+                    color: "#fff",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    letterSpacing: 0.5,
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 4px 24px rgba(124,92,252,0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  {isLoading ? (
+                    <>
+                      <span
+                        style={{
+                          width: 16,
+                          height: 16,
+                          border: "2px solid rgba(255,255,255,0.3)",
+                          borderTop: "2px solid #fff",
+                          borderRadius: "50%",
+                          display: "inline-block",
+                          animation: "spin 0.7s linear infinite",
+                        }}
+                      />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Feedback 🚀"
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </>
   );
 }
